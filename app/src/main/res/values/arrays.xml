@@ -153,4 +153,13 @@
         <item>@string/notificationsMentionsOnly</item>
     </string-array>
 
+    <string-array name="encryption_algorithms">
+        <item>AES</item>
+        <item>DES</item>
+        <item>CAMELLIA</item>
+        <item>ChaCha20-Poly1305</item>
+        <item>XChaCha20-Poly1305</item>
+        <item>Aegis256</item>
+    </string-array>
+
 </resources>

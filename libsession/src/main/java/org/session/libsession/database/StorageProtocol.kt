@@ -3,6 +3,7 @@ package org.session.libsession.database
 import android.content.Context
 import android.net.Uri
 import network.loki.messenger.libsession_util.ConfigBase
+import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact
@@ -34,11 +35,12 @@ import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
-import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 
 interface StorageProtocol {
 
-    // General
+    // ----------------------------------------
+    //  Funciones ya existentes
+    // ----------------------------------------
     fun getUserPublicKey(): String?
     fun getUserX25519KeyPair(): ECKeyPair
     fun getUserProfile(): Profile
@@ -46,7 +48,6 @@ interface StorageProtocol {
     fun setBlocksCommunityMessageRequests(recipient: Recipient, blocksMessageRequests: Boolean)
     fun setUserProfilePicture(newProfilePicture: String?, newProfileKey: ByteArray?)
     fun clearUserPic()
-    // Signal
     fun getOrGenerateRegistrationID(): Int
 
     // Jobs
@@ -109,12 +110,9 @@ interface StorageProtocol {
     fun getReceivedMessageTimestamps(): Set<Long>
     fun addReceivedMessageTimestamp(timestamp: Long)
     fun removeReceivedMessageTimestamps(timestamps: Set<Long>)
-    /**
-     * Returns the IDs of the saved attachments.
-     */
     fun persistAttachments(messageID: Long, attachments: List<Attachment>): List<Long>
     fun getAttachmentsForMessage(messageID: Long): List<DatabaseAttachment>
-    fun getMessageIdInDatabase(timestamp: Long, author: String): Pair<Long, Boolean>? // TODO: This is a weird name
+    fun getMessageIdInDatabase(timestamp: Long, author: String): Pair<Long, Boolean>?
     fun getMessageType(timestamp: Long, author: String): MessageType?
     fun updateSentTimestamp(messageID: Long, isMms: Boolean, openGroupSentTimestamp: Long, threadId: Long)
     fun markAsResyncing(timestamp: Long, author: String)
@@ -146,10 +144,26 @@ interface StorageProtocol {
     fun removeClosedGroupPublicKey(groupPublicKey: String)
     fun addClosedGroupEncryptionKeyPair(encryptionKeyPair: ECKeyPair, groupPublicKey: String, timestamp: Long)
     fun removeAllClosedGroupEncryptionKeyPairs(groupPublicKey: String)
-    fun insertIncomingInfoMessage(context: Context, senderPublicKey: String, groupID: String, type: SignalServiceGroup.Type,
-        name: String, members: Collection<String>, admins: Collection<String>, sentTimestamp: Long)
-    fun insertOutgoingInfoMessage(context: Context, groupID: String, type: SignalServiceGroup.Type, name: String,
-        members: Collection<String>, admins: Collection<String>, threadID: Long, sentTimestamp: Long)
+    fun insertIncomingInfoMessage(
+        context: Context,
+        senderPublicKey: String,
+        groupID: String,
+        type: SignalServiceGroup.Type,
+        name: String,
+        members: Collection<String>,
+        admins: Collection<String>,
+        sentTimestamp: Long
+    )
+    fun insertOutgoingInfoMessage(
+        context: Context,
+        groupID: String,
+        type: SignalServiceGroup.Type,
+        name: String,
+        members: Collection<String>,
+        admins: Collection<String>,
+        threadID: Long,
+        sentTimestamp: Long
+    )
     fun isClosedGroup(publicKey: String): Boolean
     fun getClosedGroupEncryptionKeyPairs(groupPublicKey: String): MutableList<ECKeyPair>
     fun getLatestClosedGroupEncryptionKeyPair(groupPublicKey: String): ECKeyPair?
@@ -162,7 +176,7 @@ interface StorageProtocol {
     // Settings
     fun setProfileSharing(address: Address, value: Boolean)
 
-    // Thread
+    // Threads
     fun getOrCreateThreadIdFor(address: Address): Long
     fun getThreadIdFor(publicKey: String, groupPublicKey: String?, openGroupID: String?, createThread: Boolean): Long?
     fun getThreadId(publicKeyOrOpenGroupID: String): Long?
@@ -195,14 +209,23 @@ interface StorageProtocol {
     fun getAttachmentThumbnailUri(attachmentId: AttachmentId): Uri
 
     // Message Handling
-    /**
-     * Returns the ID of the `TSIncomingMessage` that was constructed.
-     */
-    fun persist(message: VisibleMessage, quotes: QuoteModel?, linkPreview: List<LinkPreview?>, groupPublicKey: String?, openGroupID: String?, attachments: List<Attachment>, runThreadUpdate: Boolean): Long?
+    fun persist(
+        message: VisibleMessage,
+        quotes: QuoteModel?,
+        linkPreview: List<LinkPreview?>,
+        groupPublicKey: String?,
+        openGroupID: String?,
+        attachments: List<Attachment>,
+        runThreadUpdate: Boolean
+    ): Long?
     fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean = false)
     fun getLastSeen(threadId: Long): Long
     fun updateThread(threadId: Long, unarchive: Boolean)
-    fun insertDataExtractionNotificationMessage(senderPublicKey: String, message: DataExtractionNotificationInfoMessage, sentTimestamp: Long)
+    fun insertDataExtractionNotificationMessage(
+        senderPublicKey: String,
+        message: DataExtractionNotificationInfoMessage,
+        sentTimestamp: Long
+    )
     fun insertMessageRequestResponseFromContact(response: MessageRequestResponse)
     fun insertMessageRequestResponseFromYou(threadId: Long)
     fun setRecipientApproved(recipient: Recipient, approved: Boolean)
@@ -220,7 +243,12 @@ interface StorageProtocol {
     fun getLastOutboxMessageId(server: String): Long?
     fun setLastOutboxMessageId(server: String, messageId: Long)
     fun removeLastOutboxMessageId(server: String)
-    fun getOrCreateBlindedIdMapping(blindedId: String, server: String, serverPublicKey: String, fromOutbox: Boolean = false): BlindedIdMapping
+    fun getOrCreateBlindedIdMapping(
+        blindedId: String,
+        server: String,
+        serverPublicKey: String,
+        fromOutbox: Boolean = false
+    ): BlindedIdMapping
 
     fun addReaction(reaction: Reaction, messageSender: String, notifyUnread: Boolean)
     fun removeReaction(emoji: String, messageTimestamp: Long, author: String, notifyUnread: Boolean)
@@ -244,4 +272,22 @@ interface StorageProtocol {
     fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean
     fun canPerformConfigChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean
     fun isCheckingCommunityRequests(): Boolean
+
+
+    // --------------------------------------------------------
+    // NUEVO: Soporte para cifrado por hilo:
+    // --------------------------------------------------------
+    fun getThreadKeyAlias(threadId: Long): String?
+    fun setThreadKeyAlias(threadId: Long, alias: String?)
+
+    /**
+     * Devuelve una lista de hilos con snippet (por ejemplo para mostrar en un Spinner).
+     */
+    data class ThreadInfo(val threadId: Long, val snippet: String)
+    fun getAllThreadsForEncryptionSpinner(): List<ThreadInfo>
+
+    // --------------------------------------------------------
+    // NUEVO: Soporte para crear hilos desde un alias (UUID):
+    // --------------------------------------------------------
+    fun findOrCreateThreadByAlias(alias: String): Long
 }

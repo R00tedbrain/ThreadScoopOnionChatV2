@@ -3,7 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-sdk tools:overrideLibrary="com.astuetz.pagerslidingtabstrip,pl.tajchert.waitingdots,com.h6ah4i.android.multiselectlistpreferencecompat,android.support.v13,com.davemorrissey.labs.subscaleview,com.tomergoldst.tooltips,com.klinker.android.send_message,com.takisoft.colorpicker,android.support.v14.preference" />
+    <uses-sdk
+        tools:overrideLibrary="com.astuetz.pagerslidingtabstrip,pl.tajchert.waitingdots,com.h6ah4i.android.multiselectlistpreferencecompat,android.support.v13,com.davemorrissey.labs.subscaleview,com.tomergoldst.tooltips,com.klinker.android.send_message,com.takisoft.colorpicker,android.support.v14.preference" />
 
     <permission
         android:name="network.loki.messenger.ACCESS_SESSION_SECRETS"
@@ -42,13 +43,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- Google may (potentially) insist we implement `ConnectionService` to request MANAGE_OWN_CALLS - see:
-           - https://developer.android.com/reference/android/Manifest.permission#MANAGE_OWN_CALLS
-           - https://developer.android.com/reference/android/telecom/ConnectionService
-    -->
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
-
     <uses-permission android:name="android.app.role.DIALER" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
@@ -65,9 +60,8 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- Only used on Android API 29 and lower -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
-    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
     <uses-permission android:name="network.loki.messenger.ACCESS_SESSION_SECRETS" />
 
@@ -78,7 +72,6 @@
     </queries>
 
     <!-- The allowBackup="false" below is important to guard against potential malicious backups -->
-
     <application
         android:name="org.thoughtcrime.securesms.ApplicationContext"
         android:allowBackup="false"
@@ -88,10 +81,9 @@
         android:networkSecurityConfig="@xml/network_security_configuration"
         android:supportsRtl="true"
         android:theme="@style/Theme.Session.DayNight"
-        tools:replace="android:allowBackup,android:label" >
+        tools:replace="android:allowBackup,android:label,android:theme" >
 
         <!-- Disable all analytics -->
-
         <meta-data
             android:name="firebase_analytics_collection_deactivated"
             android:value="true" />
@@ -160,8 +152,23 @@
             android:name="org.thoughtcrime.securesms.preferences.BlockedContactsActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Session.DayNight.FlatActionBar"
-            android:label="@string/conversationsBlockedContacts"
-            />
+            android:label="@string/conversationsBlockedContacts"/>
+
+        <activity
+            android:name="org.thoughtcrime.securesms.security.ExtraSecuritySettingsActivity"
+            android:label="@string/extra_security"
+            android:exported="false" />
+        <activity
+            android:name="org.thoughtcrime.securesms.security.ExtraSecurityKeyPickerActivity"
+            android:label="@string/extra_security"
+            android:exported="false" />
+
+        <!-- NUEVA ACTIVIDAD: ExtraSecurityActivity -->
+        <activity
+            android:name="org.thoughtcrime.securesms.security.ExtraSecurityActivity"
+            android:label="@string/extra_security"
+            android:screenOrientation="portrait"
+            android:exported="false" />
         <activity
             android:name="org.thoughtcrime.securesms.groups.EditClosedGroupActivity"
             android:label="@string/groupEdit"
@@ -186,9 +193,11 @@
             android:name="org.thoughtcrime.securesms.preferences.HelpSettingsActivity"
             android:label="@string/sessionHelp"
             android:screenOrientation="portrait" />
-        <activity android:name="org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity"
+        <activity
+            android:name="org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity"
             android:screenOrientation="portrait"/>
-        <activity android:name="org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity"
+        <activity
+            android:name="org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Session.DayNight.NoActionBar" />
 
@@ -281,6 +290,48 @@
             android:theme="@style/Theme.Session.DayNight.NoActionBar"
             android:launchMode="singleTask"
             android:windowSoftInputMode="stateHidden" />
+
+        <!-- NUEVAS ACTIVIDADES CON THEME -->
+
+        <activity
+            android:name="network.loki.mesenger.EncryptProcessActivity"
+            android:label="Encrypt Process"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" />
+
+        <activity
+            android:name="network.loki.mesenger.KeyManagerActivity"
+            android:label="Key Manager"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" />
+
+        <activity
+            android:name="network.loki.mesenger.DecryptProcessActivity"
+            android:label="Decrypt Process"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" />
+
+        <activity
+            android:name="network.loki.mesenger.ImportKeyActivity"
+            android:label="Import Key"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" />
+
+
+        <activity
+            android:name="network.loki.mesenger.QrScannerActivity"
+            android:label="QR Scanner"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" />
+
+
+        <!-- FIN NUEVAS ACTIVIDADES -->
+
         <activity
             android:name="org.thoughtcrime.securesms.DummyActivity"
             android:allowTaskReparenting="true"
@@ -301,7 +352,8 @@
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
             android:exported="true"
             android:theme="@style/Theme.Session.DayNight.NoActionBar" />
-        <activity android:name="org.thoughtcrime.securesms.calls.WebRtcCallActivity"
+        <activity
+            android:name="org.thoughtcrime.securesms.calls.WebRtcCallActivity"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:showForAllUsers="true"
@@ -321,10 +373,8 @@
         <service
             android:name="org.thoughtcrime.securesms.service.KeyCachingService"
             android:enabled="true"
-            android:exported="false" android:foregroundServiceType="specialUse">
-<!--            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"-->
-<!--                android:value="@string/preferences_app_protection__lock_signal_access_with_android_screen_lock_or_fingerprint"/>-->
-        </service>
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
         <service
             android:name="org.thoughtcrime.securesms.service.DirectShareService"
             android:exported="true"
@@ -404,26 +454,30 @@
             android:authorities="network.loki.securesms.database.recipient"
             android:exported="false" />
 
-        <receiver android:name="org.thoughtcrime.securesms.service.BootReceiver"
+        <receiver
+            android:name="org.thoughtcrime.securesms.service.BootReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="network.loki.securesms.RESTART" />
             </intent-filter>
         </receiver>
-        <receiver android:name="org.thoughtcrime.securesms.service.PersistentConnectionBootListener"
+        <receiver
+            android:name="org.thoughtcrime.securesms.service.PersistentConnectionBootListener"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-        <receiver android:name="org.thoughtcrime.securesms.notifications.LocaleChangedReceiver"
+        <receiver
+            android:name="org.thoughtcrime.securesms.notifications.LocaleChangedReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.LOCALE_CHANGED" />
             </intent-filter>
         </receiver>
-        <receiver android:name="org.thoughtcrime.securesms.notifications.DeleteNotificationReceiver"
+        <receiver
+            android:name="org.thoughtcrime.securesms.notifications.DeleteNotificationReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="network.loki.securesms.DELETE_NOTIFICATION" />

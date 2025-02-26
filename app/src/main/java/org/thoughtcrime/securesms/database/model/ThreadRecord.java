@@ -5,7 +5,7 @@
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.thoughtcrime.securesms.database.model;
 
 import static org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY;
@@ -33,7 +34,6 @@ import android.text.style.StyleSpan;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.squareup.phrase.Phrase;
-import org.session.libsession.utilities.ExpirationUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
@@ -47,30 +47,74 @@ import network.loki.messenger.R;
 /**
  * The message record model which represents thread heading messages.
  *
- * @author Moxie Marlinspike
- *
+ * Este archivo se ha modificado para incluir el campo `threadKeyAlias`,
+ * que hace referencia a la clave de cifrado específica del hilo (thread).
  */
 public class ThreadRecord extends DisplayRecord {
 
-    private @Nullable final Uri     snippetUri;
-    public @Nullable  final MessageRecord lastMessage;
-    private           final long    count;
-    private           final int     unreadCount;
-    private           final int     unreadMentionCount;
-    private           final int     distributionType;
-    private           final boolean archived;
-    private           final long    expiresIn;
-    private           final long    lastSeen;
-    private           final boolean pinned;
-    private           final int     initialRecipientHash;
-    private           final long    dateSent;
+    private @Nullable final Uri snippetUri;
+    public  @Nullable final MessageRecord lastMessage;
+    private final long   count;
+    private final int    unreadCount;
+    private final int    unreadMentionCount;
+    private final int    distributionType;
+    private final boolean archived;
+    private final long   expiresIn;
+    private final long   lastSeen;
+    private final boolean pinned;
+    private final int    initialRecipientHash;
+    private final long   dateSent;
 
-    public ThreadRecord(@NonNull String body, @Nullable Uri snippetUri,
-                        @Nullable MessageRecord lastMessage, @NonNull Recipient recipient, long date, long count, int unreadCount,
-                        int unreadMentionCount, long threadId, int deliveryReceiptCount, int status,
-                        long snippetType,  int distributionType, boolean archived, long expiresIn,
-                        long lastSeen, int readReceiptCount, boolean pinned)
-    {
+    // ----------------------------------------------
+    // NUEVO: campo para alias de cifrado por hilo
+    // ----------------------------------------------
+    private final @Nullable String threadKeyAlias;
+
+    /**
+     * Constructor principal de ThreadRecord.
+     *
+     * @param body               El texto principal/snippet del mensaje.
+     * @param snippetUri         URI de una imagen de snippet (ej: thumbnail).
+     * @param lastMessage        El último MessageRecord en la conversación.
+     * @param recipient          El Recipient asociado a este hilo.
+     * @param date               Marca de tiempo (ms).
+     * @param count              Cantidad de mensajes en el hilo.
+     * @param unreadCount        Cantidad de mensajes no leídos.
+     * @param unreadMentionCount Cantidad de menciones no leídas.
+     * @param threadId           ID del hilo en la BD local.
+     * @param deliveryReceiptCount   Conteo de receipts de entrega.
+     * @param status             Estado de envío/recepción.
+     * @param snippetType        Tipo de snippet (ej: inbound, outbound, etc.).
+     * @param distributionType   Tipo de distribución (ej: 1 a 1, grupo, etc.).
+     * @param archived           Flag de archivado.
+     * @param expiresIn          Tiempo en ms para expirar.
+     * @param lastSeen           Última marca de lectura.
+     * @param readReceiptCount   Conteo de receipts de lectura.
+     * @param pinned             Indica si el hilo está pineado.
+     *
+     * @param threadKeyAlias     Alias de la clave de cifrado específica del hilo (opcional).
+     */
+    public ThreadRecord(
+            @NonNull String body,
+            @Nullable Uri snippetUri,
+            @Nullable MessageRecord lastMessage,
+            @NonNull Recipient recipient,
+            long date,
+            long count,
+            int unreadCount,
+            int unreadMentionCount,
+            long threadId,
+            int deliveryReceiptCount,
+            int status,
+            long snippetType,
+            int distributionType,
+            boolean archived,
+            long expiresIn,
+            long lastSeen,
+            int readReceiptCount,
+            boolean pinned,
+            @Nullable String threadKeyAlias // nuevo parámetro
+    ) {
         super(body, recipient, date, date, threadId, status, deliveryReceiptCount, snippetType, readReceiptCount);
         this.snippetUri           = snippetUri;
         this.lastMessage          = lastMessage;
@@ -84,11 +128,75 @@ public class ThreadRecord extends DisplayRecord {
         this.pinned               = pinned;
         this.initialRecipientHash = recipient.hashCode();
         this.dateSent             = date;
+        this.threadKeyAlias       = threadKeyAlias;
     }
 
-    public @Nullable Uri getSnippetUri() {
-        return snippetUri;
+    /**
+     * Constructor antiguo sin `threadKeyAlias` para compatibilidad,
+     * si fuera necesario no romper implementaciones.
+     */
+    public ThreadRecord(
+            @NonNull String body,
+            @Nullable Uri snippetUri,
+            @Nullable MessageRecord lastMessage,
+            @NonNull Recipient recipient,
+            long date,
+            long count,
+            int unreadCount,
+            int unreadMentionCount,
+            long threadId,
+            int deliveryReceiptCount,
+            int status,
+            long snippetType,
+            int distributionType,
+            boolean archived,
+            long expiresIn,
+            long lastSeen,
+            int readReceiptCount,
+            boolean pinned
+    ) {
+        this(
+                body,
+                snippetUri,
+                lastMessage,
+                recipient,
+                date,
+                count,
+                unreadCount,
+                unreadMentionCount,
+                threadId,
+                deliveryReceiptCount,
+                status,
+                snippetType,
+                distributionType,
+                archived,
+                expiresIn,
+                lastSeen,
+                readReceiptCount,
+                pinned,
+                null  // threadKeyAlias por defecto = null
+        );
     }
+
+    // ----------------------------------------------
+    // GETTERS
+    // ----------------------------------------------
+    public @Nullable Uri getSnippetUri()        { return snippetUri; }
+    public @Nullable MessageRecord getLastMessage() { return lastMessage; }
+    public long getCount()                     { return count; }
+    public int  getUnreadCount()               { return unreadCount; }
+    public int  getUnreadMentionCount()        { return unreadMentionCount; }
+    public long getDate()                      { return getDateReceived(); }
+    public boolean isArchived()                { return archived; }
+    public int  getDistributionType()          { return distributionType; }
+    public long getExpiresIn()                 { return expiresIn; }
+    public long getLastSeen()                  { return lastSeen; }
+    public boolean isPinned()                  { return pinned; }
+    public int  getInitialRecipientHash()      { return initialRecipientHash; }
+    public long getDateSent()                  { return dateSent; }
+
+    // NUEVO: alias cifrado por hilo
+    public @Nullable String getThreadKeyAlias() { return threadKeyAlias; }
 
     private String getName() {
         String name = getRecipient().getName();
@@ -99,11 +207,10 @@ public class ThreadRecord extends DisplayRecord {
         return name;
     }
 
-
     @Override
     public CharSequence getDisplayBody(@NonNull Context context) {
         // no need to display anything if there are no messages
-        if (lastMessage == null){
+        if (lastMessage == null) {
             return "";
         }
         else if (isGroupUpdateMessage()) {
@@ -130,8 +237,6 @@ public class ThreadRecord extends DisplayRecord {
                     .put(NAME_KEY, getName())
                     .format().toString();
         } else if (SmsDatabase.Types.isExpirationTimerUpdate(type)) {
-            // Use the same message as we would for displaying on the conversation screen.
-            // lastMessage shouldn't be null here, but we'll check just in case.
             if (lastMessage != null) {
                 return lastMessage.getDisplayBody(context).toString();
             } else {
@@ -149,29 +254,24 @@ public class ThreadRecord extends DisplayRecord {
 
         } else if (MmsSmsColumns.Types.isMessageRequestResponse(type)) {
             try {
-                if (lastMessage.getRecipient().getAddress().serialize().equals(
-                        TextSecurePreferences.getLocalNumber(context))) {
+                if (lastMessage.getRecipient().getAddress().serialize()
+                        .equals(TextSecurePreferences.getLocalNumber(context))) {
                     return UtilKt.getSubbedCharSequence(
                             context,
                             R.string.messageRequestYouHaveAccepted,
                             new Pair<>(NAME_KEY, getName())
                     );
                 }
+            } catch (Exception e) {
+                // the above can throw a null exception
             }
-            catch (Exception e){} // the above can throw a null exception
-
             return context.getString(R.string.messageRequestsAccepted);
         } else if (getCount() == 0) {
             return new SpannableString(context.getString(R.string.messageEmpty));
         } else {
-            // This block hits when we receive a media message from an unaccepted contact - however,
-            // unaccepted contacts aren't allowed to send us media - so we'll return an empty string
-            // if it's JUST an image, or the body text that accompanied the image should any exist.
-            // We could return null here - but then we have to find all the usages of this
-            // `getDisplayBody` method and make sure it doesn't fall over if it has a null result.
+            // If we receive a media message from an unapproved contact, etc...
             if (TextUtils.isEmpty(getBody())) {
                 return new SpannableString("");
-                // Old behaviour was: return new SpannableString(emphasisAdded(context.getString(R.string.mediaMessage)));
             } else {
                 return getNonControlMessageDisplayBody(context);
             }
@@ -179,50 +279,29 @@ public class ThreadRecord extends DisplayRecord {
     }
 
     /**
-     * Logic to get the body for non control messages
+     * Logic to get the body for non-control messages
      */
     public CharSequence getNonControlMessageDisplayBody(@NonNull Context context) {
         Recipient recipient = getRecipient();
         // The logic will differ depending on the type.
-        // 1-1, note to self and control messages (we shouldn't have any in here, but leaving the
-        // logic to be safe) do not need author details
+        // 1-1, note to self and control messages do not need author details
         if (recipient.isLocalNumber() || recipient.is1on1() ||
-                (lastMessage != null && lastMessage.isControlMessage())
-        ) {
+                (lastMessage != null && lastMessage.isControlMessage())) {
             return getBody();
-        } else { // for groups (new, legacy, communities) show either 'You' or the contact's name
+        } else {
+            // For groups (new, legacy, communities) show either 'You' or the contact's name
             String prefix = "";
             if (lastMessage != null && lastMessage.isOutgoing()) {
                 prefix = context.getString(R.string.you);
-            }
-            else if(lastMessage != null){
+            } else if (lastMessage != null) {
                 prefix = lastMessage.getIndividualRecipient().toShortString();
             }
 
             return Phrase.from(context.getString(R.string.messageSnippetGroup))
                     .put(AUTHOR_KEY, prefix)
                     .put(MESSAGE_SNIPPET_KEY, getBody())
-                    .format().toString();
+                    .format()
+                    .toString();
         }
     }
-
-    public long getCount()               { return count; }
-
-    public int getUnreadCount()          { return unreadCount; }
-
-    public int getUnreadMentionCount()   { return unreadMentionCount; }
-
-    public long getDate()                { return getDateReceived(); }
-
-    public boolean isArchived()          { return archived; }
-
-    public int getDistributionType()     { return distributionType; }
-
-    public long getExpiresIn()           { return expiresIn; }
-
-    public long getLastSeen()            { return lastSeen; }
-
-    public boolean isPinned()            { return pinned; }
-
-    public int getInitialRecipientHash() { return initialRecipientHash; }
 }

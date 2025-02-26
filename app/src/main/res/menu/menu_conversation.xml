@@ -19,4 +19,11 @@
         android:title="@string/conversationsAddToHome"
         android:id="@+id/menu_add_shortcut" />
 
+    <!-- Nuevo ítem para Extra Security -->
+    <item
+        android:title="@string/extra_security"
+        android:id="@+id/menu_extra_security"
+        android:icon="@drawable/ic_lock"
+        android:contentDescription="@string/AccessibilityId_extraSecurity"
+        app:showAsAction="never"/>
 </menu>

@@ -1,0 +1,18 @@
+# ThreadScoopOnionChat
+
+Esta version es un Fork de " https://github.com/session-foundation/session-android ", enfocado en la privacidad.
+
+## Como surgio ThreadScoopOnionChat ?
+
+Desde siempre soy un fanatico de la privacidad y de la seguridad en las comunicaciones, siempre estoy investigando sobbre posibles brechas de seguridad en aplicaciones de mensajeria.
+ThreadScoopOnionChat Surge despues del analisis de este blog " https://soatok.blog/2025/01/14/dont-use-session-signal-fork/ ", en este blog se desriben varios aspectos por los que no se recomienda
+utilizar Session, y yo me preguntaba como es posible que una Fundacion enfocada en la privacidad con las subvenciones que recibe y apoyos no an podido mejorar este protocolo?
+La respuesta sigo sin entenderla, puesto que mis recursos son mucho menores que los de una fundacion comparado con una persona simplemente fan de la privacidad y seguridad.
+En este Blog se relataron ciertos problemas :
+
+1> " https://soatok.blog/2025/01/14/dont-use-session-signal-fork/#insufficient-entropy-ed25519 "
+2> " https://soatok.blog/2025/01/14/dont-use-session-signal-fork/#in-band-negotiation "
+3> " https://soatok.blog/2025/01/14/dont-use-session-signal-fork/#public-keys-aes-gcm "
+
+Esta es una version enfocada en la privacidad solucionando algunos fallos de seguridad y añadiendo dos capas de cifrado adicional.
+Revisar en github todos los cambios

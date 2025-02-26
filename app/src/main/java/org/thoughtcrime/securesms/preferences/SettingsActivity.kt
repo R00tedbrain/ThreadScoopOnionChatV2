@@ -1,4 +1,4 @@
- package org.thoughtcrime.securesms.preferences
+package org.thoughtcrime.securesms.preferences
 
 import android.Manifest
 import android.app.Activity
@@ -109,6 +109,9 @@ import org.thoughtcrime.securesms.util.push
 import java.io.File
 import javax.inject.Inject
 
+// Import actualizado para apuntar a la nueva ubicación de KeyManagerActivity:
+import network.loki.mesenger.KeyManagerActivity  // <--- IMPORTANTE PARA NAVEGAR A LA NUEVA ACTIVIDAD
+
 @AndroidEntryPoint
 class SettingsActivity : PassphraseRequiredActionBarActivity() {
     private val TAG = "SettingsActivity"
@@ -120,7 +123,10 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
     private lateinit var binding: ActivitySettingsBinding
     private var displayNameEditActionMode: ActionMode? = null
-        set(value) { field = value; handleDisplayNameEditActionModeChanged() }
+        set(value) {
+            field = value
+            handleDisplayNameEditActionModeChanged()
+        }
 
     private val onAvatarCropped = registerForActivityResult(CropImageContract()) { result ->
         viewModel.onAvatarPicked(result)
@@ -128,7 +134,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
     private val onPickImage = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ){ result ->
+    ) { result ->
         if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
 
         val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
@@ -141,7 +147,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     ) { result ->
         if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
 
-        if(result.data?.getBooleanExtra(RecoveryPasswordActivity.RESULT_RECOVERY_HIDDEN, false) == true){
+        if (result.data?.getBooleanExtra(RecoveryPasswordActivity.RESULT_RECOVERY_HIDDEN, false) == true) {
             viewModel.permanentlyHidePassword()
         }
     }
@@ -165,7 +171,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
         // set the compose dialog content
         binding.avatarDialog.setThemedContent {
-            if(showAvatarDialog){
+            if (showAvatarDialog) {
                 AvatarDialogContainer(
                     saveAvatar = viewModel::saveAvatar,
                     removeAvatar = viewModel::removeAvatar,
@@ -183,9 +189,13 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             btnGroupNameDisplay.text = viewModel.getDisplayName()
             publicKeyTextView.text = viewModel.hexEncodedPublicKey
             val gitCommitFirstSixChars = BuildConfig.GIT_HASH.take(6)
-            val environment: String = if(BuildConfig.BUILD_TYPE == "release") "" else " - ${prefs.getEnvironment().label}"
-            val versionDetails = " ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE} - $gitCommitFirstSixChars) $environment"
-            val versionString = Phrase.from(applicationContext, R.string.updateVersion).put(VERSION_KEY, versionDetails).format()
+            val environment: String =
+                if (BuildConfig.BUILD_TYPE == "release") "" else " - ${prefs.getEnvironment().label}"
+            val versionDetails =
+                " ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE} - $gitCommitFirstSixChars) $environment"
+            val versionString = Phrase.from(applicationContext, R.string.updateVersion)
+                .put(VERSION_KEY, versionDetails)
+                .format()
             versionTextView.text = versionString
         }
 
@@ -209,7 +219,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
         lifecycleScope.launch {
             viewModel.avatarData.collect {
-                if(it == null) return@collect
+                if (it == null) return@collect
 
                 binding.profilePictureView.apply {
                     publicKey = it.publicKey
@@ -222,7 +232,6 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
     override fun onStart() {
         super.onStart()
-
         binding.profilePictureView.update()
     }
 
@@ -248,7 +257,8 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.settings_general, menu)
         if (BuildConfig.DEBUG) {
-            menu.findItem(R.id.action_qr_code)?.contentDescription = resources.getString(R.string.AccessibilityId_qrView)
+            menu.findItem(R.id.action_qr_code)?.contentDescription =
+                resources.getString(R.string.AccessibilityId_qrView)
         }
         return true
     }
@@ -263,7 +273,11 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults)
     }
@@ -283,12 +297,10 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             binding.displayNameEditText.requestFocus()
             inputMethodManager.showSoftInput(binding.displayNameEditText, 0)
 
-            // Save the updated display name when the user presses enter on the soft keyboard
-            binding.displayNameEditText.setOnEditorActionListener { v, actionId, event ->
+            // Guardar cuando el usuario presiona Enter en el teclado
+            binding.displayNameEditText.setOnEditorActionListener { _, actionId, _ ->
                 when (actionId) {
-                    // Note: IME_ACTION_DONE is how we've configured the soft keyboard to respond,
-                    // while IME_ACTION_UNSPECIFIED is what triggers when we hit enter on a
-                    // physical keyboard.
+                    // IME_ACTION_DONE es la acción configurada; IME_ACTION_UNSPECIFIED salta en teclado físico
                     EditorInfo.IME_ACTION_DONE, EditorInfo.IME_ACTION_UNSPECIFIED -> {
                         saveDisplayName()
                         displayNameEditActionMode?.finish()
@@ -304,43 +316,36 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
     private fun updateDisplayName(displayName: String): Boolean {
         binding.loader.isVisible = true
-
-        // We'll assume we fail & flip the flag on success
         var updateWasSuccessful = false
 
-        val haveNetworkConnection = NetworkUtils.haveValidNetworkConnection(this@SettingsActivity);
+        val haveNetworkConnection = NetworkUtils.haveValidNetworkConnection(this@SettingsActivity)
         if (!haveNetworkConnection) {
             Log.w(TAG, "Cannot update display name - no network connection.")
         } else {
-            // if we have a network connection then attempt to update the display name
             TextSecurePreferences.setProfileName(this, displayName)
             val user = viewModel.getUser()
             if (user == null) {
                 Log.w(TAG, "Cannot update display name - missing user details from configFactory.")
             } else {
                 user.setName(displayName)
-                // sync remote config
                 ConfigurationMessageUtilities.syncConfigurationIfNeeded(this)
                 binding.btnGroupNameDisplay.text = displayName
                 updateWasSuccessful = true
             }
         }
 
-        // Inform the user if we failed to update the display name
         if (!updateWasSuccessful) {
-            Toast.makeText(this@SettingsActivity, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this@SettingsActivity,
+                R.string.profileErrorUpdate,
+                Toast.LENGTH_LONG
+            ).show()
         }
 
         binding.loader.isVisible = false
         return updateWasSuccessful
     }
-    // endregion
 
-    // region Interaction
-
-    /**
-     * @return true if the update was successful.
-     */
     private fun saveDisplayName(): Boolean {
         val displayName = binding.displayNameEditText.text.toString().trim()
 
@@ -350,15 +355,18 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         }
 
         if (displayName.toByteArray().size > ProfileManagerProtocol.NAME_PADDED_LENGTH) {
-            Toast.makeText(this, R.string.displayNameErrorDescriptionShorter, Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.displayNameErrorDescriptionShorter, Toast.LENGTH_SHORT)
+                .show()
             return false
         }
 
         return updateDisplayName(displayName)
     }
+    // endregion
 
+    // region Interaction
     private fun startAvatarSelection() {
-        // Ask for an optional camera permission.
+        // Se pide el permiso de cámara opcional
         Permissions.with(this)
             .request(Manifest.permission.CAMERA)
             .onAnyResult {
@@ -371,7 +379,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             .execute()
     }
 
-    private fun cropImage(inputFile: Uri?, outputFile: Uri?){
+    private fun cropImage(inputFile: Uri?, outputFile: Uri?) {
         avatarSelection.circularCropImage(
             inputFile = inputFile,
             outputFile = outputFile,
@@ -379,7 +387,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     }
     // endregion
 
-    private inner class DisplayNameEditActionModeCallback: ActionMode.Callback {
+    private inner class DisplayNameEditActionModeCallback : ActionMode.Callback {
 
         override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
             mode.title = getString(R.string.displayNameEnter)
@@ -388,22 +396,18 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             return true
         }
 
-        override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
-            return false
-        }
+        override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean = false
 
         override fun onDestroyActionMode(mode: ActionMode) {
             this@SettingsActivity.displayNameEditActionMode = null
         }
 
         override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
-            when (item.itemId) {
-                R.id.applyButton -> {
-                    if (this@SettingsActivity.saveDisplayName()) {
-                        mode.finish()
-                    }
-                    return true
+            if (item.itemId == R.id.applyButton) {
+                if (this@SettingsActivity.saveDisplayName()) {
+                    mode.finish()
                 }
+                return true
             }
             return false
         }
@@ -440,40 +444,68 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
             Cell {
                 Column {
-                    // add the debug menu in non release builds
+                    // Modo debug
                     if (BuildConfig.BUILD_TYPE != "release") {
-                        LargeItemButton("Debug Menu", R.drawable.ic_settings) { push<DebugActivity>() }
+                        LargeItemButton("Debug Menu", R.drawable.ic_settings) {
+                            push<DebugActivity>()
+                        }
                         Divider()
                     }
 
                     Crossfade(if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow, label = "path") {
-                        LargeItemButtonWithDrawable(R.string.onionRoutingPath, it) { push<PathActivity>() }
+                        LargeItemButtonWithDrawable(R.string.onionRoutingPath, it) {
+                            push<PathActivity>()
+                        }
                     }
                     Divider()
 
-                    LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_privacy_icon) { push<PrivacySettingsActivity>() }
+                    LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_privacy_icon) {
+                        push<PrivacySettingsActivity>()
+                    }
                     Divider()
 
-                    LargeItemButton(R.string.sessionNotifications, R.drawable.ic_speaker, Modifier.contentDescription(R.string.AccessibilityId_notifications)) { push<NotificationSettingsActivity>() }
+                    LargeItemButton(
+                        R.string.sessionNotifications,
+                        R.drawable.ic_speaker,
+                        Modifier.contentDescription(R.string.AccessibilityId_notifications)
+                    ) {
+                        push<NotificationSettingsActivity>()
+                    }
                     Divider()
 
-                    LargeItemButton(R.string.sessionConversations, R.drawable.ic_conversations, Modifier.contentDescription(R.string.AccessibilityId_sessionConversations)) { push<ChatSettingsActivity>() }
+                    LargeItemButton(
+                        R.string.sessionConversations,
+                        R.drawable.ic_conversations,
+                        Modifier.contentDescription(R.string.AccessibilityId_sessionConversations)
+                    ) {
+                        push<ChatSettingsActivity>()
+                    }
                     Divider()
 
-                    LargeItemButton(R.string.sessionMessageRequests, R.drawable.ic_message_requests, Modifier.contentDescription(R.string.AccessibilityId_sessionMessageRequests)) { push<MessageRequestsActivity>() }
+                    LargeItemButton(
+                        R.string.sessionMessageRequests,
+                        R.drawable.ic_message_requests,
+                        Modifier.contentDescription(R.string.AccessibilityId_sessionMessageRequests)
+                    ) {
+                        push<MessageRequestsActivity>()
+                    }
                     Divider()
 
-                    LargeItemButton(R.string.sessionAppearance, R.drawable.ic_appearance, Modifier.contentDescription(R.string.AccessibilityId_sessionAppearance)) { push<AppearanceSettingsActivity>() }
+                    LargeItemButton(R.string.sessionAppearance, R.drawable.ic_appearance) {
+                        push<AppearanceSettingsActivity>()
+                    }
                     Divider()
 
                     LargeItemButton(
                         R.string.sessionInviteAFriend,
                         R.drawable.ic_invite_friend,
                         Modifier.contentDescription(R.string.AccessibilityId_sessionInviteAFriend)
-                    ) { sendInvitationToUseSession() }
+                    ) {
+                        sendInvitationToUseSession()
+                    }
                     Divider()
 
-                    // Only show the recovery password option if the user has not chosen to permanently hide it
+                    // Solo se muestra si el usuario no ha elegido ocultar Recovery Password
                     if (!recoveryHidden) {
                         LargeItemButton(
                             R.string.sessionRecoveryPassword,
@@ -486,14 +518,41 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                         Divider()
                     }
 
-                    LargeItemButton(R.string.sessionHelp, R.drawable.ic_help, Modifier.contentDescription(R.string.AccessibilityId_help)) { push<HelpSettingsActivity>() }
+                    LargeItemButton(
+                        R.string.sessionHelp,
+                        R.drawable.ic_help,
+                        Modifier.contentDescription(R.string.AccessibilityId_help)
+                    ) {
+                        push<HelpSettingsActivity>()
+                    }
                     Divider()
 
-                    LargeItemButton(R.string.sessionClearData,
+                    // --------------------------
+                    // NUEVO BOTÓN: EXTRA SECURITY
+                    // --------------------------
+                    LargeItemButton(
+                        text = "Extra Security",   // O bien, R.string.extra_security si lo prefieres
+                        icon = R.drawable.ic_lock, // Cambiado a "icon" (no "iconRes")
+                        modifier = Modifier.contentDescription("Extra Security")
+                    ) {
+                        // IMPORTANTE: Redirigir a KeyManagerActivity de tu submódulo (nueva ruta):
+                        val intent = Intent(this@SettingsActivity, KeyManagerActivity::class.java)
+                        startActivity(intent)
+                    }
+                    Divider()
+                    // --------------------------
+
+                    LargeItemButton(
+                        R.string.sessionClearData,
                         R.drawable.ic_delete,
                         Modifier.contentDescription(R.string.AccessibilityId_sessionClearData),
                         dangerButtonColors()
-                    ) { ClearAllDataDialog().show(supportFragmentManager, "Clear All Data Dialog") }
+                    ) {
+                        ClearAllDataDialog().show(
+                            supportFragmentManager,
+                            "Clear All Data Dialog"
+                        )
+                    }
                 }
             }
         }
@@ -501,10 +560,10 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
     @Composable
     fun AvatarDialogContainer(
-        startAvatarSelection: ()->Unit,
-        saveAvatar: ()->Unit,
-        removeAvatar: ()->Unit
-    ){
+        startAvatarSelection: () -> Unit,
+        saveAvatar: () -> Unit,
+        removeAvatar: () -> Unit
+    ) {
         val state by viewModel.avatarDialogState.collectAsState()
 
         AvatarDialog(
@@ -518,10 +577,10 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     @Composable
     fun AvatarDialog(
         state: SettingsViewModel.AvatarDialogState,
-        startAvatarSelection: ()->Unit,
-        saveAvatar: ()->Unit,
-        removeAvatar: ()->Unit
-    ){
+        startAvatarSelection: () -> Unit,
+        saveAvatar: () -> Unit,
+        removeAvatar: () -> Unit
+    ) {
         AlertDialog(
             onDismissRequest = {
                 viewModel.onAvatarDialogDismissed()
@@ -529,16 +588,13 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             },
             title = stringResource(R.string.profileDisplayPictureSet),
             content = {
-                // custom content that has the displayed images
-
-                // main container that control the overall size and adds the rounded bg
                 Box(
                     modifier = Modifier
                         .padding(top = LocalDimensions.current.smallSpacing)
                         .size(dimensionResource(id = R.dimen.large_profile_picture_size))
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
-                            indication = null // the ripple doesn't look nice as a square with the plus icon on top too
+                            indication = null
                         ) {
                             startAvatarSelection()
                         }
@@ -549,24 +605,25 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    // the image content will depend on state type
-                    when(val s = state){
-                        // user avatar
+                    when (val s = state) {
                         is UserAvatar -> {
                             Avatar(userAddress = s.address)
                         }
 
-                        // temporary image
                         is TempAvatar -> {
                             Image(
-                                modifier = Modifier.size(dimensionResource(id = R.dimen.large_profile_picture_size))
-                                    .clip(shape = CircleShape,),
-                                bitmap = BitmapFactory.decodeByteArray(s.data, 0, s.data.size).asImageBitmap(),
+                                modifier = Modifier
+                                    .size(dimensionResource(id = R.dimen.large_profile_picture_size))
+                                    .clip(CircleShape),
+                                bitmap = BitmapFactory.decodeByteArray(
+                                    s.data,
+                                    0,
+                                    s.data.size
+                                ).asImageBitmap(),
                                 contentDescription = null
                             )
                         }
 
-                        // empty state
                         else -> {
                             Image(
                                 modifier = Modifier.align(Alignment.Center),
@@ -577,7 +634,6 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                         }
                     }
 
-                    // '+' button that sits atop the custom content
                     Image(
                         modifier = Modifier
                             .size(LocalDimensions.current.spacing)
@@ -586,15 +642,14 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                                 color = LocalColors.current.primary
                             )
                             .padding(LocalDimensions.current.xxxsSpacing)
-                            .align(Alignment.BottomEnd)
-                        ,
+                            .align(Alignment.BottomEnd),
                         painter = painterResource(id = R.drawable.ic_plus),
                         contentDescription = null,
                         colorFilter = ColorFilter.tint(Color.Black)
                     )
                 }
             },
-            showCloseButton = true, // display the 'x' button
+            showCloseButton = true,
             buttons = listOf(
                 DialogButtonModel(
                     text = GetString(R.string.save),
@@ -604,7 +659,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 DialogButtonModel(
                     text = GetString(R.string.remove),
                     color = LocalColors.current.danger,
-                    enabled = state is UserAvatar || // can remove is the user has an avatar set
+                    enabled = state is UserAvatar ||
                             (state is TempAvatar && state.hasAvatar),
                     onClick = removeAvatar
                 )
@@ -616,7 +671,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     @Composable
     fun PreviewAvatarDialog(
         @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
-    ){
+    ) {
         PreviewTheme(colors) {
             AvatarDialog(
                 state = NoAvatar,
@@ -629,9 +684,12 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 }
 
 private fun Context.hasPaths(): Flow<Boolean> = LocalBroadcastManager.getInstance(this).hasPaths()
+
 private fun LocalBroadcastManager.hasPaths(): Flow<Boolean> = callbackFlow {
     val receiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) { trySend(Unit) }
+        override fun onReceive(context: Context, intent: Intent) {
+            trySend(Unit)
+        }
     }
 
     registerReceiver(receiver, IntentFilter("buildingPaths"))

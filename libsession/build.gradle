@@ -46,10 +46,14 @@ dependencies {
     implementation project(":libsession-util")
     implementation project(":liblazysodium")
 
+
     implementation("com.google.dagger:hilt-android:$daggerHiltVersion")
     ksp("com.google.dagger:hilt-compiler:$daggerHiltVersion")
     ksp("androidx.hilt:hilt-compiler:$jetpackHiltVersion")
 
+    implementation 'com.journeyapps:zxing-android-embedded:4.2.0'
+    implementation 'com.google.zxing:core:3.4.1'
+    implementation "androidx.security:security-crypto:1.1.0-alpha03"
     implementation "net.java.dev.jna:jna:5.12.1@aar"
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     implementation "androidx.core:core-ktx:$coreVersion"
@@ -84,5 +88,6 @@ dependencies {
     testImplementation "androidx.arch.core:core-testing:2.1.0"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion"
     testImplementation "org.conscrypt:conscrypt-openjdk-uber:2.0.0"
+    implementation project(":commonlib")
     implementation 'org.greenrobot:eventbus:3.0.0'
 }

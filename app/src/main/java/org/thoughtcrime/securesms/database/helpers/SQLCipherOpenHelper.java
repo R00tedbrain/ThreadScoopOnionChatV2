@@ -8,13 +8,18 @@ import android.content.Context;
 import android.database.Cursor;
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
+
 import com.squareup.phrase.Phrase;
+
 import java.io.File;
+
 import net.zetetic.database.sqlcipher.SQLiteConnection;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import net.zetetic.database.sqlcipher.SQLiteDatabaseHook;
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper;
+
 import network.loki.messenger.R;
+
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.crypto.DatabaseSecret;
@@ -96,45 +101,45 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int    DATABASE_VERSION         = lokiV47;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   private static final String CIPHER3_DATABASE_NAME    = "signal.db";
-  public static final String  DATABASE_NAME            = "signal_v4.db";
+  public  static final String  DATABASE_NAME           = "signal_v4.db";
 
   private final Context        context;
   private final DatabaseSecret databaseSecret;
 
   public SQLCipherOpenHelper(@NonNull Context context, @NonNull DatabaseSecret databaseSecret) {
     super(
-      context,
-      DATABASE_NAME,
-      databaseSecret.asString(),
-      null,
-      DATABASE_VERSION,
-      MIN_DATABASE_VERSION,
-      null,
-      new SQLiteDatabaseHook() {
-        @Override
-        public void preKey(SQLiteConnection connection) {
-          SQLCipherOpenHelper.applySQLCipherPragmas(connection, true);
-        }
+            context,
+            DATABASE_NAME,
+            databaseSecret.asString(),
+            null,
+            DATABASE_VERSION,
+            MIN_DATABASE_VERSION,
+            null,
+            new SQLiteDatabaseHook() {
+              @Override
+              public void preKey(SQLiteConnection connection) {
+                SQLCipherOpenHelper.applySQLCipherPragmas(connection, true);
+              }
 
-        @Override
-        public void postKey(SQLiteConnection connection) {
-          SQLCipherOpenHelper.applySQLCipherPragmas(connection, true);
+              @Override
+              public void postKey(SQLiteConnection connection) {
+                SQLCipherOpenHelper.applySQLCipherPragmas(connection, true);
 
-          // if not vacuumed in a while, perform that operation
-          long currentTime = System.currentTimeMillis();
-          // 7 days
-          if (currentTime - TextSecurePreferences.getLastVacuumTime(context) > 604_800_000) {
-            connection.execute("VACUUM;", null, null);
-            TextSecurePreferences.setLastVacuumNow(context);
-          }
-        }
-      },
-      // Note: Now that we support concurrent database reads the migrations are actually non-blocking
-      // because of this we need to initially open the database with writeAheadLogging (WAL mode) disabled
-      // and enable it once the database officially opens it's connection (which will cause it to re-connect
-      // in WAL mode) - this is a little inefficient but will prevent SQL-related errors/crashes due to
-      // incomplete migrations
-      false
+                // if not vacuumed in a while, perform that operation
+                long currentTime = System.currentTimeMillis();
+                // 7 days
+                if (currentTime - TextSecurePreferences.getLastVacuumTime(context) > 604_800_000) {
+                  connection.execute("VACUUM;", null, null);
+                  TextSecurePreferences.setLastVacuumNow(context);
+                }
+              }
+            },
+            // Note: Now that we support concurrent database reads the migrations are actually non-blocking
+            // because of this we need to initially open the database with writeAheadLogging (WAL mode) disabled
+            // and enable it once the database officially opens it's connection (which will cause it to re-connect
+            // in WAL mode) - this is a little inefficient but will prevent SQL-related errors/crashes due to
+            // incomplete migrations
+            false
     );
 
     this.context        = context.getApplicationContext();
@@ -191,9 +196,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
             // fully succeed and the database will try to create all it's tables and immediately fail so
             // we will need to remove and remigrate)
             if (version > 0) {
-              // TODO: Delete 'CIPHER3_DATABASE_NAME' once enough time has past
-//            //noinspection ResultOfMethodCallIgnored
-//            oldDbFile.delete();
+              // TODO: Delete 'CIPHER3_DATABASE_NAME' once enough time has passed
+              // oldDbFile.delete();
               return;
             }
           }
@@ -217,36 +221,31 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       SQLiteDatabase oldDb = SQLCipherOpenHelper.open(oldDbPath, databaseSecret, false);
       int oldDbVersion = oldDb.getVersion();
 
-      // Export the old database to the new one (will have the default 'kdf_iter' and 'page_size' settings)
+      // Export the old database to the new one (will have the default 'kdf_iter' and 'page_size')
       oldDb.rawExecSQL(
-        String.format("ATTACH DATABASE '%s' AS sqlcipher4 KEY '%s'", newDbPath, databaseSecret.asString())
+              String.format("ATTACH DATABASE '%s' AS sqlcipher4 KEY '%s'", newDbPath, databaseSecret.asString())
       );
-      Cursor cursor = oldDb.rawQuery("SELECT sqlcipher_export('sqlcipher4')");
+      Cursor cursor = oldDb.rawQuery("SELECT sqlcipher_export('sqlcipher4')", null);
       cursor.moveToLast();
       cursor.close();
       oldDb.rawExecSQL("DETACH DATABASE sqlcipher4");
       oldDb.close();
 
-      // Open the newly migrated database (to ensure it works) and set it's version so we don't try
-      // to run any of our custom migrations
+      // Open the newly migrated database (to ensure it works) and set its version
       SQLiteDatabase newDb = SQLCipherOpenHelper.open(newDbPath, databaseSecret, true);
       newDb.setVersion(oldDbVersion);
       newDb.close();
 
-      // TODO: Delete 'CIPHER3_DATABASE_NAME' once enough time has past
-      // Remove the old database file since it will no longer be used
-//      //noinspection ResultOfMethodCallIgnored
-//      oldDbFile.delete();
+      // TODO: Delete 'CIPHER3_DATABASE_NAME' once enough time has passed
+      // oldDbFile.delete();
     }
     catch (Exception e) {
       Log.e(TAG, "Migration from SQLCipher3 to SQLCipher4 failed", e);
 
-      // If an exception was thrown then we should remove the new database file (it's probably invalid)
       if (!newDbFile.delete()) {
         Log.e(TAG, "Unable to delete invalid new database file");
       }
 
-      // Notify the user of the issue so they know they can downgrade until the issue is fixed
       NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
       String channelId = context.getString(R.string.failures);
 
@@ -259,16 +258,15 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
               .format();
 
       NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
-        .setSmallIcon(R.drawable.ic_notification)
-        .setColor(context.getResources().getColor(R.color.textsecure_primary))
-        .setCategory(NotificationCompat.CATEGORY_ERROR)
-        .setContentTitle(context.getString(R.string.errorDatabase))
-        .setContentText(errorTxt)
-        .setAutoCancel(true);
+              .setSmallIcon(R.drawable.ic_notification)
+              .setColor(context.getResources().getColor(R.color.textsecure_primary))
+              .setCategory(NotificationCompat.CATEGORY_ERROR)
+              .setContentTitle(context.getString(R.string.errorDatabase))
+              .setContentText(errorTxt)
+              .setAutoCancel(true);
 
       notificationManager.notify(5874, builder.build());
 
-      // Throw the error (app will crash but there is nothing else we can do unfortunately)
       throw e;
     }
   }
@@ -284,9 +282,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(GroupDatabase.CREATE_TABLE);
     db.execSQL(RecipientDatabase.CREATE_TABLE);
     db.execSQL(GroupReceiptDatabase.CREATE_TABLE);
+
     for (String sql : SearchDatabase.CREATE_TABLE) {
       db.execSQL(sql);
     }
+
     db.execSQL(LokiAPIDatabase.getCreateSnodePoolTableCommand());
     db.execSQL(LokiAPIDatabase.getCreateOnionRequestPathTableCommand());
     db.execSQL(LokiAPIDatabase.getCreateSwarmTableCommand());
@@ -341,7 +341,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(LokiAPIDatabase.DROP_LEGACY_RECEIVED_HASHES);
     db.execSQL(BlindedIdMappingDatabase.CREATE_BLINDED_ID_MAPPING_TABLE_COMMAND);
     db.execSQL(GroupMemberDatabase.CREATE_GROUP_MEMBER_TABLE_COMMAND);
-    db.execSQL(LokiAPIDatabase.RESET_SEQ_NO); // probably not needed but consistent with all migrations
+    db.execSQL(LokiAPIDatabase.RESET_SEQ_NO);
     db.execSQL(EmojiSearchDatabase.CREATE_EMOJI_SEARCH_TABLE_COMMAND);
     db.execSQL(ReactionDatabase.CREATE_REACTION_TABLE_COMMAND);
     db.execSQL(ThreadDatabase.getUnreadMentionCountCommand());
@@ -363,12 +363,14 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(RecipientDatabase.getAddWrapperHash());
     db.execSQL(RecipientDatabase.getAddBlocksCommunityMessageRequests());
     db.execSQL(LokiAPIDatabase.CREATE_LAST_LEGACY_MESSAGE_TABLE);
+
+    // === AÑADIMOS LA COLUMNA thread_key_alias PARA CREARSE NADA MÁS INSTALAR LA APP ===
+    db.execSQL("ALTER TABLE thread ADD COLUMN thread_key_alias TEXT DEFAULT NULL;");
   }
 
   @Override
   public void onConfigure(SQLiteDatabase db) {
     super.onConfigure(db);
-
     db.execSQL("PRAGMA cache_size = 10000");
   }
 
@@ -377,7 +379,6 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     Log.i(TAG, "Upgrading database: " + oldVersion + ", " + newVersion);
 
     db.beginTransaction();
-
     try {
 
       if (oldVersion < lokiV7) {
@@ -424,12 +425,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       }
 
       if (oldVersion < lokiV18_CLEAR_BG_POLL_JOBS) {
-        // BackgroundPollJob was replaced with BackgroundPollWorker. Clear all the scheduled job records.
         db.execSQL("DELETE FROM job_spec WHERE factory_key = 'BackgroundPollJob'");
         db.execSQL("DELETE FROM constraint_spec WHERE factory_key = 'BackgroundPollJob'");
       }
 
-      // Many classes were removed. We need to update DB structure and data to match the code changes.
       if (oldVersion < lokiV19) {
         db.execSQL(LokiAPIDatabase.getCreateClosedGroupEncryptionKeyPairsTable());
         db.execSQL(LokiAPIDatabase.getCreateClosedGroupPublicKeysTable());
@@ -630,14 +629,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       }
 
       if (oldVersion < lokiV47) {
-        // Ideally we shouldn't need to check if the column exists, but somehow we get
-        // "duplicated column" from play store crashes.
-        // If you are keen you can investigate
-        // deep into this but for now, we will just check if the column exists before adding it.
         if (!columnExists(db, SmsDatabase.TABLE_NAME, SmsDatabase.IS_DELETED)) {
           db.execSQL(SmsDatabase.ADD_IS_DELETED_COLUMN);
         }
-
         if (!columnExists(db, MmsDatabase.TABLE_NAME, MmsDatabase.IS_DELETED)) {
           db.execSQL(MmsDatabase.ADD_IS_DELETED_COLUMN);
         }
@@ -652,9 +646,6 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   @Override
   public void onOpen(SQLiteDatabase db) {
     super.onOpen(db);
-
-    // Now that the database is officially open (ie. the migrations are completed) we want to enable
-    // write ahead logging (WAL mode) to officially support concurrent read connections
     db.enableWriteAheadLogging();
   }
 
@@ -663,23 +654,21 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   }
 
   private void executeStatements(SQLiteDatabase db, String[] statements) {
-    for (String statement : statements)
+    for (String statement : statements) {
       db.execSQL(statement);
+    }
   }
 
   private static boolean columnExists(@NonNull SQLiteDatabase db, @NonNull String table, @NonNull String column) {
     try (Cursor cursor = db.rawQuery("PRAGMA table_xinfo(" + table + ")", null)) {
       int nameColumnIndex = cursor.getColumnIndexOrThrow("name");
-
       while (cursor.moveToNext()) {
         String name = cursor.getString(nameColumnIndex);
-
         if (name.equals(column)) {
           return true;
         }
       }
     }
-
     return false;
   }
 

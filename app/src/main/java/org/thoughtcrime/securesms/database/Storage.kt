@@ -1705,7 +1705,7 @@ open class Storage(
 
             MessageId(messageRecord.id, messageRecord.isMms)
         } else return
-        
+
         DatabaseComponent.get(context).reactionDatabase().addReaction(
             messageId,
             ReactionRecord(
@@ -1794,6 +1794,7 @@ open class Storage(
         }?.let { ExpirationConfiguration(threadId, it, dbExpirationMetadata.updatedTimestampMs) }
     }
 
+
     override fun setExpirationConfiguration(config: ExpirationConfiguration) {
         val recipient = getRecipientForThread(config.threadId) ?: return
 
@@ -1847,6 +1848,35 @@ open class Storage(
         }
         return expiringMessages
     }
+    override fun getThreadKeyAlias(threadId: Long): String? {
+        val threadDb = DatabaseComponent.get(context).threadDatabase()
+        return threadDb.getThreadKeyAlias(threadId) // Devuelve la columna thread_key_alias
+    }
+
+    override fun setThreadKeyAlias(threadId: Long, alias: String?) {
+        val threadDb = DatabaseComponent.get(context).threadDatabase()
+        threadDb.setThreadKeyAlias(threadId, alias)
+    }
+
+
+    override fun getAllThreadsForEncryptionSpinner(): List<StorageProtocol.ThreadInfo> {
+        val threadDb = DatabaseComponent.get(context).threadDatabase()
+        val result = mutableListOf<StorageProtocol.ThreadInfo>()
+        val cursor = threadDb.conversationList
+        val reader = threadDb.readerFor(cursor)
+
+        var record = reader.next
+        while (record != null) {
+            val snippet = record.body.take(30)  // Ej: tomamos los primeros 30 chars
+            result.add(StorageProtocol.ThreadInfo(record.threadId, snippet))
+            record = reader.next
+        }
+        reader.close()
+        cursor?.close()
+        return result
+    }
+
+
 
     override fun updateDisappearingState(
         messageSender: String,
@@ -1869,6 +1899,14 @@ open class Storage(
             lokiDb.setLastLegacySenderAddress(recipientAddress, null)
         }
     }
+
+    // === NUEVO MÉTODO: findOrCreateThreadByAlias(...) ===
+    override fun findOrCreateThreadByAlias(alias: String): Long {
+        return DatabaseComponent.get(context)
+            .threadDatabase()
+            .findOrCreateThreadByAlias(alias)
+    }
+
 }
 
 /**
@@ -1878,3 +1916,4 @@ open class Storage(
  */
 private fun String.truncate(sizeInBytes: Int): String =
     toByteArray().takeIf { it.size > sizeInBytes }?.take(sizeInBytes)?.toByteArray()?.let(::String) ?: this
+

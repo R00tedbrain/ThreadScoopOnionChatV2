@@ -2,10 +2,11 @@ package org.thoughtcrime.securesms.conversation.v2.menus
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ClipboardManager
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.os.AsyncTask
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -18,6 +19,10 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.squareup.phrase.Phrase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.leave
@@ -46,10 +51,13 @@ import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.findActivity
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.BitmapUtil
+// >>> Importamos ExtraSecurityActivity
+import org.thoughtcrime.securesms.security.ExtraSecurityActivity
+// <<< Fin de importaciones extras
 import java.io.IOException
 
 object ConversationMenuHelper {
-    
+
     fun onPrepareOptionsMenu(
         menu: Menu,
         inflater: MenuInflater,
@@ -100,6 +108,11 @@ object ConversationMenuHelper {
             inflater.inflate(R.menu.menu_conversation_call, menu)
         }
 
+        // >>> Agregar opción Extra Security
+        // Se asume que el ítem está definido en el XML con id menu_extra_security
+        inflater.inflate(R.menu.menu_extra_security, menu)
+        // <<< Fin opción extra
+
         // Search
         val searchViewItem = menu.findItem(R.id.menu_search)
         (context as ConversationActivityV2).searchViewItem = searchViewItem
@@ -108,7 +121,6 @@ object ConversationMenuHelper {
             override fun onQueryTextSubmit(query: String): Boolean {
                 return true
             }
-
             override fun onQueryTextChange(query: String): Boolean {
                 context.onSearchQueryUpdated(query)
                 return true
@@ -125,7 +137,6 @@ object ConversationMenuHelper {
                 }
                 return true
             }
-
             override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
                 searchView.setOnQueryTextListener(null)
                 context.onSearchClosed()
@@ -136,6 +147,18 @@ object ConversationMenuHelper {
 
     fun onOptionItemSelected(context: Context, item: MenuItem, thread: Recipient): Boolean {
         when (item.itemId) {
+            // >>> Nueva opción: Extra Security
+            R.id.menu_extra_security -> {
+                val intent = Intent(context, ExtraSecurityActivity::class.java)
+                // Opcional: pasar el identificador de la conversación
+                if (context is ConversationActivityV2) {
+                    intent.putExtra("CONVERSATION_ID", context.conversationId.toString())
+                }
+                context.startActivity(intent)
+                return true
+            }
+            // <<< Fin opción extra
+
             R.id.menu_view_all_media -> { showAllMedia(context, thread) }
             R.id.menu_search -> { search(context) }
             R.id.menu_add_shortcut -> { addShortcut(context, thread) }
@@ -167,8 +190,6 @@ object ConversationMenuHelper {
     }
 
     private fun call(context: Context, thread: Recipient) {
-
-        // if the user has not enabled voice/video calls
         if (!TextSecurePreferences.isCallNotificationsEnabled(context)) {
             context.showSessionDialog {
                 title(R.string.callsPermissionsRequired)
@@ -179,36 +200,29 @@ object ConversationMenuHelper {
                 cancelButton()
             }
             return
-        }
-        // or if the user has not granted audio/microphone permissions
-        else if (!Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)) {
+        } else if (!Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)) {
             Log.d("Loki", "Attempted to make a call without audio permissions")
-
             Permissions.with(context.findActivity())
                 .request(Manifest.permission.RECORD_AUDIO)
                 .withPermanentDenialDialog(
-                    context.getSubbedString(R.string.permissionsMicrophoneAccessRequired,
-                    APP_NAME_KEY to context.getString(R.string.app_name))
+                    context.getSubbedString(
+                        R.string.permissionsMicrophoneAccessRequired,
+                        APP_NAME_KEY to context.getString(R.string.app_name)
+                    )
                 )
                 .execute()
-
             return
         }
-
-        WebRtcCallService.createCall(context, thread)
-            .let(context::startService)
-
+        WebRtcCallService.createCall(context, thread).let(context::startService)
         Intent(context, WebRtcCallActivity::class.java)
             .apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
             .let(context::startActivity)
     }
 
-    @SuppressLint("StaticFieldLeak")
     private fun addShortcut(context: Context, thread: Recipient) {
-        object : AsyncTask<Void?, Void?, IconCompat?>() {
-
-            @Deprecated("Deprecated in Java")
-            override fun doInBackground(vararg params: Void?): IconCompat? {
+        // Se recomienda usar el scope de ciclo de vida si está disponible (por ejemplo, lifecycleScope)
+        CoroutineScope(Dispatchers.Main).launch {
+            val icon: IconCompat? = withContext(Dispatchers.IO) {
                 var icon: IconCompat? = null
                 val contactPhoto = thread.contactPhoto
                 if (contactPhoto != null) {
@@ -217,30 +231,36 @@ object ConversationMenuHelper {
                         bitmap = BitmapUtil.createScaledBitmap(bitmap, 300, 300)
                         icon = IconCompat.createWithAdaptiveBitmap(bitmap)
                     } catch (e: IOException) {
-                        // Do nothing
+                        // Manejo de la excepción si es necesario
                     }
                 }
                 if (icon == null) {
-                    icon = IconCompat.createWithResource(context, if (thread.isGroupRecipient) R.mipmap.ic_group_shortcut else R.mipmap.ic_person_shortcut)
+                    icon = IconCompat.createWithResource(
+                        context,
+                        if (thread.isGroupRecipient) R.mipmap.ic_group_shortcut else R.mipmap.ic_person_shortcut
+                    )
                 }
-                return icon
+                icon
             }
-
-            @Deprecated("Deprecated in Java")
-            override fun onPostExecute(icon: IconCompat?) {
-                val name = Optional.fromNullable<String>(thread.name)
-                    .or(Optional.fromNullable<String>(thread.profileName))
-                    .or(thread.toShortString())
-                val shortcutInfo = ShortcutInfoCompat.Builder(context, thread.address.serialize() + '-' + System.currentTimeMillis())
-                    .setShortLabel(name)
-                    .setIcon(icon)
-                    .setIntent(ShortcutLauncherActivity.createIntent(context, thread.address))
-                    .build()
-                if (ShortcutManagerCompat.requestPinShortcut(context, shortcutInfo, null)) {
-                    Toast.makeText(context, context.resources.getString(R.string.conversationsAddedToHome), Toast.LENGTH_LONG).show()
-                }
+            val name = Optional.fromNullable<String>(thread.name)
+                .or(Optional.fromNullable<String>(thread.profileName))
+                .or(thread.toShortString())
+            val shortcutInfo = ShortcutInfoCompat.Builder(
+                context,
+                thread.address.serialize() + '-' + System.currentTimeMillis()
+            )
+                .setShortLabel(name)
+                .setIcon(icon)
+                .setIntent(ShortcutLauncherActivity.createIntent(context, thread.address))
+                .build()
+            if (ShortcutManagerCompat.requestPinShortcut(context, shortcutInfo, null)) {
+                Toast.makeText(
+                    context,
+                    context.resources.getString(R.string.conversationsAddedToHome),
+                    Toast.LENGTH_LONG
+                ).show()
             }
-        }.execute()
+        }
     }
 
     private fun showDisappearingMessages(context: Context, thread: Recipient) {
@@ -249,37 +269,37 @@ object ConversationMenuHelper {
     }
 
     private fun unblock(context: Context, thread: Recipient) {
-        if (!thread.isContactRecipient) { return }
+        if (!thread.isContactRecipient) return
         val listener = context as? ConversationMenuListener ?: return
         listener.unblock()
     }
 
     private fun block(context: Context, thread: Recipient, deleteThread: Boolean) {
-        if (!thread.isContactRecipient) { return }
+        if (!thread.isContactRecipient) return
         val listener = context as? ConversationMenuListener ?: return
         listener.block(deleteThread)
     }
 
     private fun blockAndDelete(context: Context, thread: Recipient) {
-        if (!thread.isContactRecipient) { return }
+        if (!thread.isContactRecipient) return
         val listener = context as? ConversationMenuListener ?: return
         listener.block(deleteThread = true)
     }
 
     private fun copyAccountID(context: Context, thread: Recipient) {
-        if (!thread.isContactRecipient) { return }
+        if (!thread.isContactRecipient) return
         val listener = context as? ConversationMenuListener ?: return
         listener.copyAccountID(thread.address.toString())
     }
 
     private fun copyOpenGroupUrl(context: Context, thread: Recipient) {
-        if (!thread.isCommunityRecipient) { return }
+        if (!thread.isCommunityRecipient) return
         val listener = context as? ConversationMenuListener ?: return
         listener.copyOpenGroupUrl(thread)
     }
 
     private fun editClosedGroup(context: Context, thread: Recipient) {
-        if (!thread.isClosedGroupRecipient) { return }
+        if (!thread.isClosedGroupRecipient) return
         val intent = Intent(context, EditClosedGroupActivity::class.java)
         val groupID: String = thread.address.toGroupString()
         intent.putExtra(groupIDKey, groupID)
@@ -287,8 +307,7 @@ object ConversationMenuHelper {
     }
 
     private fun leaveClosedGroup(context: Context, thread: Recipient) {
-        if (!thread.isClosedGroupRecipient) { return }
-
+        if (!thread.isClosedGroupRecipient) return
         val group = DatabaseComponent.get(context).groupDatabase().getGroup(thread.address.toGroupString()).orNull()
         val admins = group.admins
         val accountID = TextSecurePreferences.getLocalNumber(context)
@@ -302,14 +321,12 @@ object ConversationMenuHelper {
                 .put(GROUP_NAME_KEY, group.title)
                 .format()
         }
-
         fun onLeaveFailed() {
             val txt = Phrase.from(context, R.string.groupLeaveErrorFailed)
                 .put(GROUP_NAME_KEY, group.title)
                 .format().toString()
             Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
         }
-
         context.showSessionDialog {
             title(R.string.groupLeave)
             text(message)
@@ -317,7 +334,6 @@ object ConversationMenuHelper {
                 try {
                     val groupPublicKey = doubleDecodeGroupID(thread.address.toString()).toHexString()
                     val isClosedGroup = DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(groupPublicKey)
-
                     if (isClosedGroup) MessageSender.leave(groupPublicKey, notifyUser = false)
                     else onLeaveFailed()
                 } catch (e: Exception) {
@@ -329,7 +345,7 @@ object ConversationMenuHelper {
     }
 
     private fun inviteContacts(context: Context, thread: Recipient) {
-        if (!thread.isCommunityRecipient) { return }
+        if (!thread.isCommunityRecipient) return
         val intent = Intent(context, SelectContactsActivity::class.java)
         val activity = context as AppCompatActivity
         activity.startActivityForResult(intent, ConversationActivityV2.INVITE_CONTACTS)
@@ -358,5 +374,4 @@ object ConversationMenuHelper {
         fun copyOpenGroupUrl(thread: Recipient)
         fun showDisappearingMessages(thread: Recipient)
     }
-
 }

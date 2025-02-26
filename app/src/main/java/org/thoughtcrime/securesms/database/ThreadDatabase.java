@@ -1,20 +1,3 @@
-/*
- * Copyright (C) 2011 Whisper Systems
- * Copyright (C) 2013-2017 Open Whisper Systems
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package org.thoughtcrime.securesms.database;
 
 import static org.session.libsession.utilities.GroupUtil.CLOSED_GROUP_PREFIX;
@@ -26,10 +9,14 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.MergeCursor;
 import android.net.Uri;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import com.annimon.stream.Stream;
+
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
+
 import org.jetbrains.annotations.NotNull;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
@@ -57,6 +44,7 @@ import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 import org.thoughtcrime.securesms.util.SessionMetaProtocol;
+
 import java.io.Closeable;
 import java.util.Collections;
 import java.util.HashMap;
@@ -96,38 +84,43 @@ public class ThreadDatabase extends Database {
   public  static final String READ_RECEIPT_COUNT     = "read_receipt_count";
   public  static final String EXPIRES_IN             = "expires_in";
   public  static final String LAST_SEEN              = "last_seen";
-  public static final String HAS_SENT                = "has_sent";
+  public  static final String HAS_SENT               = "has_sent";
   public  static final String IS_PINNED              = "is_pinned";
 
+  // Se asume que ya tienes (o tendrás por migración) la columna 'thread_key_alias'
+  public static final String THREAD_KEY_ALIAS        = "thread_key_alias";
+
+  private static final String ID_WHERE = ID + " = ?";
+
   public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("                    +
-    ID + " INTEGER PRIMARY KEY, " + THREAD_CREATION_DATE + " INTEGER DEFAULT 0, "                  +
-    MESSAGE_COUNT + " INTEGER DEFAULT 0, " + ADDRESS + " TEXT, " + SNIPPET + " TEXT, "             +
-    SNIPPET_CHARSET + " INTEGER DEFAULT 0, " + READ + " INTEGER DEFAULT 1, "                       +
+          ID + " INTEGER PRIMARY KEY, " + THREAD_CREATION_DATE + " INTEGER DEFAULT 0, "                  +
+          MESSAGE_COUNT + " INTEGER DEFAULT 0, " + ADDRESS + " TEXT, " + SNIPPET + " TEXT, "             +
+          SNIPPET_CHARSET + " INTEGER DEFAULT 0, " + READ + " INTEGER DEFAULT 1, "                       +
           DISTRIBUTION_TYPE + " INTEGER DEFAULT 0, " + ERROR + " INTEGER DEFAULT 0, "                    +
-    SNIPPET_TYPE + " INTEGER DEFAULT 0, " + SNIPPET_URI + " TEXT DEFAULT NULL, "                   +
-    ARCHIVED + " INTEGER DEFAULT 0, " + STATUS + " INTEGER DEFAULT 0, "                            +
-    DELIVERY_RECEIPT_COUNT + " INTEGER DEFAULT 0, " + EXPIRES_IN + " INTEGER DEFAULT 0, "          +
-    LAST_SEEN + " INTEGER DEFAULT 0, " + HAS_SENT + " INTEGER DEFAULT 0, "                         +
-    READ_RECEIPT_COUNT + " INTEGER DEFAULT 0, " + UNREAD_COUNT + " INTEGER DEFAULT 0);";
+          SNIPPET_TYPE + " INTEGER DEFAULT 0, " + SNIPPET_URI + " TEXT DEFAULT NULL, "                   +
+          ARCHIVED + " INTEGER DEFAULT 0, " + STATUS + " INTEGER DEFAULT 0, "                            +
+          DELIVERY_RECEIPT_COUNT + " INTEGER DEFAULT 0, " + EXPIRES_IN + " INTEGER DEFAULT 0, "          +
+          LAST_SEEN + " INTEGER DEFAULT 0, " + HAS_SENT + " INTEGER DEFAULT 0, "                         +
+          READ_RECEIPT_COUNT + " INTEGER DEFAULT 0, " + UNREAD_COUNT + " INTEGER DEFAULT 0);";
 
   public static final String[] CREATE_INDEXES = {
-    "CREATE INDEX IF NOT EXISTS thread_recipient_ids_index ON " + TABLE_NAME + " (" + ADDRESS + ");",
-    "CREATE INDEX IF NOT EXISTS archived_count_index ON " + TABLE_NAME + " (" + ARCHIVED + ", " + MESSAGE_COUNT + ");",
+          "CREATE INDEX IF NOT EXISTS thread_recipient_ids_index ON " + TABLE_NAME + " (" + ADDRESS + ");",
+          "CREATE INDEX IF NOT EXISTS archived_count_index ON " + TABLE_NAME + " (" + ARCHIVED + ", " + MESSAGE_COUNT + ");",
   };
 
   private static final String[] THREAD_PROJECTION = {
-      ID, THREAD_CREATION_DATE, MESSAGE_COUNT, ADDRESS, SNIPPET, SNIPPET_CHARSET, READ, UNREAD_COUNT, UNREAD_MENTION_COUNT, DISTRIBUTION_TYPE, ERROR, SNIPPET_TYPE,
-      SNIPPET_URI, ARCHIVED, STATUS, DELIVERY_RECEIPT_COUNT, EXPIRES_IN, LAST_SEEN, READ_RECEIPT_COUNT, IS_PINNED
+          ID, THREAD_CREATION_DATE, MESSAGE_COUNT, ADDRESS, SNIPPET, SNIPPET_CHARSET, READ, UNREAD_COUNT, UNREAD_MENTION_COUNT, DISTRIBUTION_TYPE, ERROR, SNIPPET_TYPE,
+          SNIPPET_URI, ARCHIVED, STATUS, DELIVERY_RECEIPT_COUNT, EXPIRES_IN, LAST_SEEN, READ_RECEIPT_COUNT, IS_PINNED
   };
 
   private static final List<String> TYPED_THREAD_PROJECTION = Stream.of(THREAD_PROJECTION)
-                                                                    .map(columnName -> TABLE_NAME + "." + columnName)
-                                                                    .toList();
+          .map(columnName -> TABLE_NAME + "." + columnName)
+          .toList();
 
   private static final List<String> COMBINED_THREAD_RECIPIENT_GROUP_PROJECTION = Stream.concat(Stream.concat(Stream.of(TYPED_THREAD_PROJECTION),
-                                                                                                             Stream.of(RecipientDatabase.TYPED_RECIPIENT_PROJECTION)),
-                                                                                                             Stream.of(GroupDatabase.TYPED_GROUP_PROJECTION))
-                                                                                                             .toList();
+                          Stream.of(RecipientDatabase.TYPED_RECIPIENT_PROJECTION)),
+                  Stream.of(GroupDatabase.TYPED_GROUP_PROJECTION))
+          .toList();
 
   public static String getCreatePinnedCommand() {
     return "ALTER TABLE "+ TABLE_NAME + " " +
@@ -138,6 +131,11 @@ public class ThreadDatabase extends Database {
     return "ALTER TABLE "+ TABLE_NAME + " " +
             "ADD COLUMN " + UNREAD_MENTION_COUNT + " INTEGER DEFAULT 0;";
   }
+
+  // Si tuvieras que migrar la columna 'thread_key_alias':
+  // public static String getThreadKeyAliasCommand() {
+  //   return "ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + THREAD_KEY_ALIAS + " TEXT DEFAULT NULL;";
+  // }
 
   private ConversationThreadUpdateListener updateListener;
 
@@ -322,7 +320,7 @@ public class ThreadDatabase extends Database {
     contentValues.put(LAST_SEEN, lastReadTime);
 
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
-    db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId+""});
+    db.update(TABLE_NAME, contentValues, ID + " = ?", new String[] {threadId+""});
 
     notifyConversationListListeners();
 
@@ -726,7 +724,7 @@ public class ThreadDatabase extends Database {
     contentValues.put(HAS_SENT, hasSent ? 1 : 0);
 
     databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, ID_WHERE,
-                                                new String[] {String.valueOf(threadId)});
+            new String[] {String.valueOf(threadId)});
 
     notifyConversationListeners(threadId);
     notifyConversationListListeners();
@@ -746,8 +744,8 @@ public class ThreadDatabase extends Database {
       }
       if (record != null && !record.isDeleted()) {
         updateThread(threadId, count, getFormattedBodyFor(record), getAttachmentUriFor(record),
-                     record.getTimestamp(), record.getDeliveryStatus(), record.getDeliveryReceiptCount(),
-                     record.getType(), unarchive, record.getExpiresIn(), record.getReadReceiptCount());
+                record.getTimestamp(), record.getDeliveryStatus(), record.getDeliveryReceiptCount(),
+                record.getType(), unarchive, record.getExpiresIn(), record.getReadReceiptCount());
         return false;
       } else {
         // for empty threads or if there is only deleted messages, show an empty snippet
@@ -833,13 +831,13 @@ public class ThreadDatabase extends Database {
   private @NonNull String createQuery(@NonNull String where, int limit) {
     String projection = Util.join(COMBINED_THREAD_RECIPIENT_GROUP_PROJECTION, ",");
     String query =
-    "SELECT " + projection + " FROM " + TABLE_NAME +
-           " LEFT OUTER JOIN " + RecipientDatabase.TABLE_NAME +
-           " ON " + TABLE_NAME + "." + ADDRESS + " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS +
-           " LEFT OUTER JOIN " + GroupDatabase.TABLE_NAME +
-           " ON " + TABLE_NAME + "." + ADDRESS + " = " + GroupDatabase.TABLE_NAME + "." + GROUP_ID +
-           " WHERE " + where +
-           " ORDER BY " + TABLE_NAME + "." + IS_PINNED + " DESC, " + TABLE_NAME + "." + THREAD_CREATION_DATE + " DESC";
+            "SELECT " + projection + " FROM " + TABLE_NAME +
+                    " LEFT OUTER JOIN " + RecipientDatabase.TABLE_NAME +
+                    " ON " + TABLE_NAME + "." + ADDRESS + " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS +
+                    " LEFT OUTER JOIN " + GroupDatabase.TABLE_NAME +
+                    " ON " + TABLE_NAME + "." + ADDRESS + " = " + GroupDatabase.TABLE_NAME + "." + GROUP_ID +
+                    " WHERE " + where +
+                    " ORDER BY " + TABLE_NAME + "." + IS_PINNED + " DESC, " + TABLE_NAME + "." + THREAD_CREATION_DATE + " DESC";
 
     if (limit >  0) {
       query += " LIMIT " + limit;
@@ -916,7 +914,7 @@ public class ThreadDatabase extends Database {
       long               expiresIn            = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.EXPIRES_IN));
       long               lastSeen             = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.LAST_SEEN));
       Uri                snippetUri           = getSnippetUri(cursor);
-      boolean            pinned              = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.IS_PINNED)) != 0;
+      boolean            pinned               = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.IS_PINNED)) != 0;
 
       if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
         readReceiptCount = 0;
@@ -933,8 +931,8 @@ public class ThreadDatabase extends Database {
       }
 
       return new ThreadRecord(body, snippetUri, lastMessage, recipient, date, count,
-                              unreadCount, unreadMentionCount, threadId, deliveryReceiptCount, status, type,
-                              distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned);
+              unreadCount, unreadMentionCount, threadId, deliveryReceiptCount, status, type,
+              distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned);
     }
 
     private @Nullable Uri getSnippetUri(Cursor cursor) {
@@ -957,4 +955,117 @@ public class ThreadDatabase extends Database {
       }
     }
   }
+
+  // ========================================================================
+  //   NUEVOS MÉTODOS: getThreadKeyAlias(...) y setThreadKeyAlias(...)
+  //   (Se asume que la columna "thread_key_alias" ya existe en tu tabla
+  //    a través de alguna migración)
+  // ========================================================================
+  /**
+   * Retorna la columna thread_key_alias para un hilo dado (threadId).
+   *
+   * @param threadId ID del hilo
+   * @return String con el valor de la columna thread_key_alias o null si no existe
+   */
+  @Nullable
+  public String getThreadKeyAlias(long threadId) {
+    SQLiteDatabase db = getReadableDatabase();
+    Cursor cursor = null;
+    try {
+      cursor = db.query(
+              TABLE_NAME,
+              new String[]{THREAD_KEY_ALIAS},   // buscamos la columna
+              ID_WHERE,
+              new String[]{String.valueOf(threadId)},
+              null,
+              null,
+              null
+      );
+      if (cursor != null && cursor.moveToFirst()) {
+        return cursor.isNull(0) ? null : cursor.getString(0);
+      }
+      return null;
+    } finally {
+      if (cursor != null) cursor.close();
+    }
+  }
+
+  /**
+   * Asigna (o borra) la columna thread_key_alias en la tabla 'thread'.
+   *
+   * @param threadId ID del hilo
+   * @param alias Valor para la columna thread_key_alias (o null para limpiarla)
+   */
+  public void setThreadKeyAlias(long threadId, @Nullable String alias) {
+    ContentValues contentValues = new ContentValues();
+    contentValues.put(THREAD_KEY_ALIAS, alias);
+
+    getWritableDatabase().update(
+            TABLE_NAME,
+            contentValues,
+            ID_WHERE,
+            new String[]{String.valueOf(threadId)}
+    );
+
+    notifyConversationListListeners();
+    // notifyConversationListeners(threadId); // si fuera necesario
+  }
+
+  // ========================================================================
+  //   NUEVO MÉTODO: findOrCreateThreadByAlias(...)
+  // ========================================================================
+  /**
+   * Busca en la tabla 'thread' un hilo con thread_key_alias = alias.
+   * Si no existe, lo crea e inserta el alias en la columna.
+   *
+   * @param alias El alias/UUID global de la conversación
+   * @return El _id local del hilo en esta tabla
+   */
+  public long findOrCreateThreadByAlias(@NonNull String alias) {
+    if (alias.isEmpty()) {
+      throw new IllegalArgumentException("Alias cannot be null or empty!");
+    }
+
+    SQLiteDatabase db = getReadableDatabase();
+    long existingId = -1;
+    Cursor cursor = null;
+    try {
+      cursor = db.query(
+              TABLE_NAME,
+              new String[] {ID},
+              THREAD_KEY_ALIAS + " = ?",
+              new String[]{alias},
+              null,
+              null,
+              null
+      );
+      if (cursor != null && cursor.moveToFirst()) {
+        existingId = cursor.getLong(0);
+      }
+    } finally {
+      if (cursor != null) cursor.close();
+    }
+
+    if (existingId >= 0) {
+      return existingId;
+    }
+
+    // Si no existe => creamos un hilo nuevo
+    ContentValues values = new ContentValues();
+    values.put(THREAD_KEY_ALIAS, alias);
+    // Suele ser conveniente asignar una fecha de creación:
+    long date = SnodeAPI.getNowWithOffset();
+    values.put(THREAD_CREATION_DATE, date - date % 1000);
+    values.put(MESSAGE_COUNT, 0);
+
+    // Insertamos
+    long newId = getWritableDatabase().insertOrThrow(TABLE_NAME, null, values);
+
+    // Notificamos si fuera necesario
+    notifyConversationListListeners();
+    // notifyConversationListeners(newId); // si procede
+
+    return newId;
+  }
 }
+

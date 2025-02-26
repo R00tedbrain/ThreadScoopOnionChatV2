@@ -105,6 +105,7 @@ import org.thoughtcrime.securesms.util.VersionDataFetcher;
 import org.thoughtcrime.securesms.webrtc.CallMessageProcessor;
 import org.webrtc.PeerConnectionFactory.InitializationOptions;
 import org.webrtc.PeerConnectionFactory;
+import org.thoughtcrime.securesms.security.ExtraSecurityManager; // Import agregado
 
 /**
  * Will be called once when the TextSecure process is created.
@@ -209,15 +210,18 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         MessagingModuleConfiguration.configure(this);
         super.onCreate();
 
+        // Inicializamos ExtraSecurityManager llamando a init() mediante INSTANCE
+        ExtraSecurityManager.INSTANCE.init(this);
+
         messagingModuleConfiguration = new MessagingModuleConfiguration(
                 this,
                 storage,
                 device,
                 messageDataProvider,
-                ()-> KeyPairUtilities.INSTANCE.getUserED25519KeyPair(this),
+                () -> KeyPairUtilities.INSTANCE.getUserED25519KeyPair(this),
                 configFactory,
                 lastSentTimestampCache
-                );
+        );
         callMessageProcessor = new CallMessageProcessor(this, textSecurePreferences, ProcessLifecycleOwner.get().getLifecycle(), storage);
         Log.i(TAG, "onCreate()");
         startKovenant();
@@ -277,7 +281,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             return;
         }
 
-        ThreadUtils.queue(()->{
+        ThreadUtils.queue(() -> {
             if (poller != null) {
                 poller.setCaughtUp(false);
             }
@@ -492,7 +496,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     public void wakeUpDeviceAndDismissKeyguardIfRequired() {
         // Get the KeyguardManager and PowerManager
         KeyguardManager keyguardManager = (KeyguardManager)getSystemService(Context.KEYGUARD_SERVICE);
-        PowerManager powerManager       = (PowerManager)getSystemService(Context.POWER_SERVICE);
+        PowerManager powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
 
         // Check if the phone is locked & if the screen is awake
         boolean isPhoneLocked = keyguardManager.isKeyguardLocked();

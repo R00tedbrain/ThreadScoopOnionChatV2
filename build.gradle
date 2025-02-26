@@ -2,12 +2,6 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        if (project.hasProperty('huawei')) maven {
-            url 'https://developer.huawei.com/repo/'
-            content {
-                includeGroup 'com.huawei.agconnect'
-            }
-        }
     }
 
     dependencies {
@@ -32,12 +26,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven {
-            url "https://raw.github.com/signalapp/maven/master/photoview/releases/"
-            content {
-                includeGroupByRegex "com\\.github\\.chrisbanes.*"
-            }
-        }
+
         maven {
             url "https://raw.github.com/signalapp/maven/master/shortcutbadger/releases/"
             content {
@@ -57,20 +46,11 @@ allprojects {
             }
         }
         maven { url "https://jitpack.io" }
-        if (project.hasProperty('huawei')) maven {
-            url 'https://developer.huawei.com/repo/'
-            content {
-                includeGroup 'com.huawei.android.hms'
-                includeGroup 'com.huawei.agconnect'
-                includeGroup 'com.huawei.hmf'
-                includeGroup 'com.huawei.hms'
-            }
-        }
     }
 
     project.ext {
-        androidMinimumSdkVersion = 26
-        androidTargetSdkVersion  = 34
-        androidCompileSdkVersion = 34
+        androidMinimumSdkVersion = 35
+        androidTargetSdkVersion  = 35
+        androidCompileSdkVersion = 35
     }
 }

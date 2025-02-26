@@ -1,176 +1,217 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
-    android:focusable="false"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/contentView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:focusable="false"
+    android:orientation="vertical"
+    android:paddingTop="32dp"
+    tools:context=".conversation.v2.ConversationActivityV2">
 
+    <!-- 1) Tu Toolbar principal -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
+        android:background="?colorPrimary"
+        android:theme="@style/Widget.Session.ActionBar.Flat"
+        app:contentInsetStart="0dp"
         app:layout_constraintBottom_toTopOf="@+id/conversationRecyclerView"
         app:layout_constraintStart_toStartOf="parent"
-        android:theme="@style/Widget.Session.ActionBar.Flat"
-        android:background="?colorPrimary"
-        app:contentInsetStart="0dp">
+        app:layout_constraintTop_toTopOf="parent">
 
-        <org.thoughtcrime.securesms.conversation.ConversationActionBarView
-            android:id="@+id/toolbarContent"
+        <!-- 2) Contenedor intermedio: RelativeLayout -->
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content">
 
+            <!-- 2a) Vista personalizada a la IZQUIERDA -->
+            <org.thoughtcrime.securesms.conversation.ConversationActionBarView
+                android:id="@+id/toolbarContent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true" />
+
+            <!-- 2b) Escudo y texto de “Extra Security” a la DERECHA -->
+            <LinearLayout
+                android:id="@+id/extraSecurityContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingRight="16dp">
+
+                <ImageView
+                    android:id="@+id/extraSecurityShield"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/extrasecurityoff"
+                    android:contentDescription="@string/extra_security_status" />
+
+                <TextView
+                    android:id="@+id/extraSecurityStatusText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Extra Security OFF"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </RelativeLayout>
     </androidx.appcompat.widget.Toolbar>
 
-    <!--
-    Add this to the below recycler view if you need to debug activity `adjustResize` issues:
-    android:background="@drawable/cross"
-    -->
+    <!-- RecyclerView de la conversación -->
     <org.thoughtcrime.securesms.conversation.v2.ConversationRecyclerView
-        android:focusable="false"
         android:id="@+id/conversationRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintVertical_weight="1"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/typingIndicatorViewContainer"
-        app:layout_constraintTop_toBottomOf="@id/toolbar" />
-
-    <org.thoughtcrime.securesms.conversation.v2.components.TypingIndicatorViewContainer
         android:focusable="false"
+        app:layout_constraintBottom_toTopOf="@+id/typingIndicatorViewContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintVertical_weight="1" />
+
+    <!-- View para el "is typing..." -->
+    <org.thoughtcrime.securesms.conversation.v2.components.TypingIndicatorViewContainer
         android:id="@+id/typingIndicatorViewContainer"
         android:layout_width="match_parent"
         android:layout_height="36dp"
         android:visibility="gone"
-        tools:visibility="visible"
+        android:focusable="false"
+        app:layout_constraintBottom_toTopOf="@+id/textSendAfterApproval"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/conversationRecyclerView"
-        app:layout_constraintBottom_toTopOf="@+id/textSendAfterApproval"
-        />
+        tools:visibility="visible" />
 
+    <!-- Input bar donde escribes mensajes -->
     <org.thoughtcrime.securesms.conversation.v2.input_bar.InputBar
         android:id="@+id/inputBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:layout_height="60dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/messageRequestBar"
-        app:layout_constraintBottom_toBottomOf="parent"
-        />
+        tools:layout_height="60dp" />
 
+    <!-- Barra de búsqueda (oculta por defecto) -->
     <org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
         android:id="@+id/searchBottomBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:visibility="gone"/>
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
     <FrameLayout
-        android:focusable="false"
         android:id="@+id/reactions_shade"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="gone"
+        android:focusable="false"
         android:background="@color/reactions_screen_light_shade_color"
-        android:foreground="@color/reactions_screen_dark_shade_color"
-        android:visibility="gone"/>
+        android:foreground="@color/reactions_screen_dark_shade_color" />
 
     <ViewStub
-        android:focusable="false"
         android:id="@+id/conversation_reaction_scrubber_stub"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:inflatedId="@+id/conversation_reaction_scrubber"
-        android:layout="@layout/conversation_reaction_scrubber"/>
+        android:focusable="false"
+        android:layout="@layout/conversation_reaction_scrubber"
+        android:inflatedId="@+id/conversation_reaction_scrubber" />
 
+    <!-- RecyclerView para menciones (oculta por defecto) -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/conversation_mention_candidates"
-        android:clipToOutline="true"
-        android:contentDescription="@string/AccessibilityId_mentions_list"
-        tools:listitem="@layout/view_mention_candidate_v2"
-        android:background="@drawable/mention_candidate_view_background"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:visibility="gone"
+        android:background="@drawable/mention_candidate_view_background"
+        android:clipToOutline="true"
+        android:contentDescription="@string/AccessibilityId_mentions_list"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toBottomOf="@+id/conversationRecyclerView"
         app:layout_constraintHeight_max="176dp"
-        app:layout_constraintBottom_toBottomOf="@+id/conversationRecyclerView" />
+        tools:listitem="@layout/view_mention_candidate_v2"
+        tools:visibility="gone" />
 
+    <!-- Botones flotantes de adjuntos (GIF, archivo, etc.) -->
     <LinearLayout
         android:id="@+id/attachmentOptionsContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/small_spacing"
-        android:elevation="8dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/inputBar"
         android:layout_marginBottom="16dp"
-        android:orientation="vertical">
+        android:elevation="8dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@+id/inputBar"
+        app:layout_constraintStart_toStartOf="parent">
 
         <FrameLayout
             android:id="@+id/gifButtonContainer"
             android:layout_width="@dimen/input_bar_button_expanded_size"
             android:layout_height="@dimen/input_bar_button_expanded_size"
-            android:contentDescription="@string/AccessibilityId_gif"
-            android:alpha="0" />
+            android:alpha="0"
+            android:contentDescription="@string/AccessibilityId_gif" />
 
         <FrameLayout
             android:id="@+id/documentButtonContainer"
-            android:layout_marginTop="8dp"
             android:layout_width="@dimen/input_bar_button_expanded_size"
             android:layout_height="@dimen/input_bar_button_expanded_size"
-            android:contentDescription="@string/AccessibilityId_files"
-            android:alpha="0" />
+            android:layout_marginTop="8dp"
+            android:alpha="0"
+            android:contentDescription="@string/AccessibilityId_files" />
 
         <FrameLayout
             android:id="@+id/libraryButtonContainer"
-            android:layout_marginTop="8dp"
             android:layout_width="@dimen/input_bar_button_expanded_size"
             android:layout_height="@dimen/input_bar_button_expanded_size"
-            android:contentDescription="@string/AccessibilityId_image"
-            android:alpha="0" />
+            android:layout_marginTop="8dp"
+            android:alpha="0"
+            android:contentDescription="@string/AccessibilityId_image" />
 
         <FrameLayout
             android:id="@+id/cameraButtonContainer"
-            android:layout_marginTop="8dp"
             android:layout_width="@dimen/input_bar_button_expanded_size"
             android:layout_height="@dimen/input_bar_button_expanded_size"
-            android:contentDescription="@string/AccessibilityId_camera"
-            android:alpha="0" />
-
+            android:layout_marginTop="8dp"
+            android:alpha="0"
+            android:contentDescription="@string/AccessibilityId_camera" />
     </LinearLayout>
 
+    <!-- Texto que muestra si estás pendiente de aprobación para enviar msg (invisible por defecto) -->
     <TextView
         android:id="@+id/textSendAfterApproval"
-        android:text="@string/messageRequestPendingDescription"
-        android:visibility="gone"
-        tools:visibility="visible"
-        android:textAlignment="center"
-        android:textColor="@color/classic_light_2"
-        android:padding="22dp"
-        android:textSize="12sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:text="You'll be able to send"
+        android:layout_marginBottom="0dp"
+        android:padding="22dp"
+        android:text="@string/messageRequestPendingDescription"
+        android:textAlignment="center"
+        android:textColor="@color/classic_light_2"
+        android:textSize="12sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/messageRequestBar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/typingIndicatorViewContainer"
-        app:layout_constraintBottom_toTopOf="@+id/messageRequestBar" />
+        tools:text="You'll be able to send"
+        tools:visibility="visible" />
 
+    <!-- Botón flotante para scrollear al final de la conversación -->
     <RelativeLayout
         android:id="@+id/scrollToBottomButton"
-        tools:visibility="visible"
-        android:visibility="gone"
         android:layout_width="40dp"
         android:layout_height="50dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/messageRequestBar"
-        android:layout_alignWithParentIfMissing="true"
+        android:layout_marginBottom="32dp"
         android:layout_marginEnd="12dp"
-        android:layout_marginBottom="32dp">
+        android:layout_alignWithParentIfMissing="true"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/messageRequestBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:visibility="visible">
 
         <RelativeLayout
             android:layout_width="40dp"
@@ -186,34 +227,32 @@
                 android:rotation="180"
                 android:src="@drawable/ic_chevron_up"
                 app:tint="?android:textColorPrimary" />
-
         </RelativeLayout>
 
         <RelativeLayout
             android:id="@+id/unreadCountIndicator"
             android:layout_width="wrap_content"
-            android:maxWidth="40dp"
-            android:paddingLeft="4dp"
-            android:paddingRight="4dp"
             android:layout_height="20dp"
-            android:layout_centerHorizontal="true"
+            android:maxWidth="40dp"
             android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
             android:background="@drawable/rounded_rectangle"
-            android:backgroundTint="?backgroundSecondary">
+            android:backgroundTint="?backgroundSecondary"
+            android:paddingLeft="4dp"
+            android:paddingRight="4dp">
 
             <TextView
                 android:id="@+id/unreadCountTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:textSize="@dimen/very_small_font_size"
+                android:text="8"
                 android:textColor="?android:textColorPrimary"
-                android:text="8" />
-
+                android:textSize="@dimen/very_small_font_size" />
         </RelativeLayout>
-
     </RelativeLayout>
 
+    <!-- Vista para grabar audios (oculta por defecto) -->
     <org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarRecordingView
         android:id="@+id/inputBarRecordingView"
         android:layout_width="match_parent"
@@ -222,37 +261,38 @@
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent" />
 
+    <!-- Banner de “bloqueado” (invisible por defecto) -->
     <FrameLayout
         android:id="@+id/blockedBanner"
-        android:contentDescription="@string/AccessibilityId_blockedBanner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar"
         android:background="?danger"
+        android:contentDescription="@string/AccessibilityId_blockedBanner"
         android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar"
         tools:visibility="visible">
 
         <TextView
             android:id="@+id/blockedBannerTextView"
-            android:contentDescription="@string/AccessibilityId_blockedBannerText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_margin="@dimen/medium_spacing"
+            android:contentDescription="@string/AccessibilityId_blockedBannerText"
             android:textColor="@color/white"
             android:textSize="@dimen/small_font_size"
             android:textStyle="bold"
             tools:text="Elon is blocked. Unblock them?" />
-
     </FrameLayout>
 
+    <!-- Banner de “outdated client” (invisible por defecto) -->
     <FrameLayout
         android:id="@+id/outdatedBanner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/blockedBanner"
-        android:background="@color/outdated_client_banner_background_color"
         android:visibility="gone"
+        android:background="@color/outdated_client_banner_background_color"
+        app:layout_constraintTop_toBottomOf="@+id/blockedBanner"
         tools:visibility="visible">
 
         <TextView
@@ -261,37 +301,37 @@
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:layout_gravity="center"
-            android:layout_marginVertical="@dimen/very_small_spacing"
             android:layout_marginHorizontal="@dimen/medium_spacing"
+            android:layout_marginVertical="@dimen/very_small_spacing"
             android:textColor="@color/black"
             android:textSize="@dimen/tiny_font_size"
             tools:text="This user's client is outdated, things may not work as expected" />
-
     </FrameLayout>
 
+    <!-- Texto placeholder (aparece si no hay mensajes) -->
     <TextView
-        android:padding="@dimen/medium_spacing"
-        style="@style/Signal.Text.Preview"
-        android:textColor="?android:textColorTertiary"
-        android:textAlignment="center"
         android:id="@+id/placeholderText"
+        style="@style/Signal.Text.Preview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="@dimen/large_spacing"
-        app:layout_constraintTop_toBottomOf="@+id/outdatedBanner"
         android:contentDescription="@string/AccessibilityId_control_message"
-        tools:text="Some Control Message Text"
-        />
+        android:padding="@dimen/medium_spacing"
+        android:textAlignment="center"
+        android:textColor="?android:textColorTertiary"
+        app:layout_constraintTop_toBottomOf="@+id/outdatedBanner"
+        tools:text="Some Control Message Text" />
 
+    <!-- Barra de solicitudes de mensaje (oculta por defecto) -->
     <LinearLayout
         android:id="@+id/messageRequestBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/inputBar"
-        app:layout_constraintTop_toBottomOf="@+id/textSendAfterApproval"
         android:layout_marginBottom="@dimen/large_spacing"
         android:orientation="vertical"
         android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/inputBar"
+        app:layout_constraintTop_toBottomOf="@+id/textSendAfterApproval"
         tools:visibility="gone">
 
         <TextView
@@ -300,11 +340,11 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:contentDescription="@string/AccessibilityId_messageRequestsBlock"
-            android:textColor="?danger"
             android:paddingHorizontal="@dimen/massive_spacing"
             android:paddingVertical="@dimen/small_spacing"
-            android:textSize="@dimen/text_size"
-            android:text="@string/deleteAfterGroupPR1BlockUser"/>
+            android:text="@string/deleteAfterGroupPR1BlockUser"
+            android:textColor="?danger"
+            android:textSize="@dimen/text_size" />
 
         <TextView
             android:id="@+id/sendAcceptsTextView"
@@ -326,38 +366,38 @@
             <Button
                 android:id="@+id/acceptMessageRequestButton"
                 style="@style/Widget.Session.Button.Common.ProminentOutline"
-                android:contentDescription="@string/AccessibilityId_messageRequestsAccept"
                 android:layout_width="0dp"
                 android:layout_height="@dimen/medium_button_height"
                 android:layout_weight="1"
+                android:contentDescription="@string/AccessibilityId_messageRequestsAccept"
                 android:text="@string/accept" />
 
             <Button
                 android:id="@+id/declineMessageRequestButton"
                 style="@style/Widget.Session.Button.Common.DangerOutline"
-                android:contentDescription="@string/AccessibilityId_decline"
                 android:layout_width="0dp"
                 android:layout_height="@dimen/medium_button_height"
                 android:layout_marginStart="@dimen/medium_spacing"
                 android:layout_weight="1"
+                android:contentDescription="@string/AccessibilityId_decline"
                 android:text="@string/delete" />
-
         </LinearLayout>
-
     </LinearLayout>
 
+    <!-- ComposeView para cargar composables (diálogos, etc.) -->
     <androidx.compose.ui.platform.ComposeView
         android:id="@+id/dialog_open_url"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- Loader / SpinKit (oculto por defecto) -->
     <RelativeLayout
         android:id="@+id/loader"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#A4000000"
-        android:focusable="true"
         android:clickable="true"
+        android:focusable="true"
         android:visibility="gone">
 
         <com.github.ybq.android.spinkit.SpinKitView
@@ -367,7 +407,6 @@
             android:layout_centerInParent="true"
             android:layout_marginTop="8dp"
             app:SpinKit_Color="@android:color/white" />
-
     </RelativeLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

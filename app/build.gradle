@@ -13,8 +13,8 @@ configurations.forEach {
     it.exclude module: "commons-logging"
 }
 
-def canonicalVersionCode = 390
-def canonicalVersionName = "1.20.8"
+def canonicalVersionCode = 391
+def canonicalVersionName = "1.20.9"
 
 def postFixSize = 10
 def abiPostFix = ['armeabi-v7a' : 1,
@@ -26,6 +26,9 @@ def abiPostFix = ['armeabi-v7a' : 1,
 // Function to get the current git commit hash so we can embed it along w/ the build version.
 // Note: This is visible in the SettingsActivity, right at the bottom (R.id.versionTextView).
 def getGitHash = { ->
+    if (!file('.git').exists()) {
+        return "nogit"
+    }
     def stdout = new ByteArrayOutputStream()
     exec {
         commandLine "git", "rev-parse", "--short", "HEAD"
@@ -33,6 +36,7 @@ def getGitHash = { ->
     }
     return stdout.toString().trim()
 }
+
 
 android {
     compileSdkVersion androidCompileSdkVersion
@@ -72,6 +76,7 @@ android {
     }
 
     defaultConfig {
+        applicationId "com.bwt.threadscooponionchatcom"
         versionCode canonicalVersionCode * postFixSize
         versionName canonicalVersionName
 
@@ -186,7 +191,7 @@ android {
             def flavour = (variant.flavorName == 'huawei') ? "-huawei" : ""
 
             if (postFix >= postFixSize) throw new AssertionError("postFix is too large")
-            output.outputFileName = output.outputFileName = "session-${variant.versionName}-${abiName}${flavour}.apk"
+            output.outputFileName = output.outputFileName = "ThreadSecureChatOnion-${variant.versionName}-${abiName}${flavour}.apk"
             output.versionCodeOverride = canonicalVersionCode * postFixSize + postFix
         }
     }
@@ -261,7 +266,15 @@ dependencies {
     ksp("androidx.hilt:hilt-compiler:$jetpackHiltVersion")
     ksp("com.google.dagger:hilt-compiler:$daggerHiltVersion")
     ksp("com.github.bumptech.glide:ksp:$glideVersion")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.80")
+    implementation "com.google.code.gson:gson:2.10.1"
 
+    implementation "androidx.security:security-crypto:1.1.0-alpha06"
+    implementation "com.journeyapps:zxing-android-embedded:4.3.0"
+    implementation "com.google.zxing:core:3.5.1"
+
+
+    implementation 'com.google.zxing:core:3.5.3'
     implementation("com.google.dagger:hilt-android:$daggerHiltVersion")
     implementation "androidx.appcompat:appcompat:$appcompatVersion"
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
@@ -286,6 +299,7 @@ dependencies {
     implementation 'androidx.fragment:fragment-ktx:1.8.4'
     implementation "androidx.core:core-ktx:$coreVersion"
     implementation "androidx.work:work-runtime-ktx:2.7.1"
+    implementation project(":commonlib")
 
     playImplementation ("com.google.firebase:firebase-messaging:24.0.0") {
         exclude group: 'com.google.firebase', module: 'firebase-core'
@@ -295,6 +309,7 @@ dependencies {
 
     if (project.hasProperty('huawei')) huaweiImplementation 'com.huawei.hms:push:6.7.0.300'
 
+    implementation "androidx.security:security-crypto:1.1.0-alpha03"
     implementation 'androidx.media3:media3-exoplayer:1.4.0'
     implementation 'androidx.media3:media3-ui:1.4.0'
     implementation 'org.conscrypt:conscrypt-android:2.5.2'
@@ -415,6 +430,7 @@ dependencies {
 
     // Note: ZXing 3.5.3 is the latest stable release as of 2024/08/21
     implementation "com.google.zxing:core:$zxingVersion"
+
 }
 
 static def getLastCommitTimestamp() {
@@ -431,7 +447,7 @@ def autoResConfig() {
     def root = file("src/main/res")
     root.eachFile { f -> files.add(f.name) }
     ['en'] + files.collect { f -> f =~ /^values-([a-z]{2}(-r[A-Z]{2})?)$/ }
-         .findAll { matcher -> matcher.find() }
-         .collect { matcher -> matcher.group(1) }
-         .sort()
+            .findAll { matcher -> matcher.find() }
+            .collect { matcher -> matcher.group(1) }
+            .sort()
 }

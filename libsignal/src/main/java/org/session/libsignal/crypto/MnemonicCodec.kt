@@ -83,12 +83,12 @@ class MnemonicCodec(private val loadFileContents: (String) -> String) {
         val prefixLength = languageConfiguration.prefixLength
         val n = truncatedWordSet.size.toLong()
 
-        // Check preconditions
-        if (words.size < 13) throw DecodingError.InputTooShort
+        // Ahora exigimos 25 palabras (24 + 1 de checksum)
+        if (words.size != 25) throw DecodingError.InputTooShort
 
         fun String.prefix() = substring(0 until prefixLength)
 
-        // Throw on invalid words, as this is the most difficult issue for a user to solve, do this first.
+        // Throw on invalid words first
         val wordPrefixes = words
             .onEach { if (it.length < prefixLength) throw DecodingError.InvalidWord }
             .map { it.prefix() }
@@ -112,21 +112,20 @@ class MnemonicCodec(private val loadFileContents: (String) -> String) {
         }.joinToString(separator = "") { it }
     }
 
-    fun sanitizeAndDecodeAsByteArray(mnemonic: String): ByteArray = sanitizeRecoveryPhrase(mnemonic).let(::decode).let(Hex::fromStringCondensed)
+    fun sanitizeAndDecodeAsByteArray(mnemonic: String): ByteArray =
+        sanitizeRecoveryPhrase(mnemonic).let(::decode).let(Hex::fromStringCondensed)
 
     private fun sanitizeRecoveryPhrase(rawMnemonic: String): String = rawMnemonic
         .replace("[^\\w]+".toRegex(), " ") // replace any sequence of non-word characters with a space
-        .trim() // remove leading and trailing whitespace (which may have been from prior special chars)
+        .trim() // remove leading and trailing whitespace
         .split("\\s+".toRegex()) // split on the now properly positioned spaces
         .joinToString(" ") // reassemble
 
     fun decodeMnemonicOrHexAsByteArray(mnemonicOrHex: String): ByteArray = try {
-        // Try to use decode mnemonicOrHex as a mnemonic
+        // Try to decode as a mnemonic
         decode(mnemonic = mnemonicOrHex).let(Hex::fromStringCondensed)
     } catch (decodeException: Exception) {
-        // It's not a valid mnemonic, if it's pure-hexadecimal then we'll interpret it as a
-        // hexadecimal-byte encoded mnemonic... unless it's 66 chars or longer, then it could be
-        // an account id.
+        // If not valid mnemonic, maybe it's a hex string
         mnemonicOrHex.takeIf { it.length < 66 && it.isHex() }
             .runCatching { Hex.fromStringCondensed(this) }
             .getOrNull()
