@@ -54,7 +54,10 @@ android {
 
     packagingOptions {
         resources {
-            excludes += ['LICENSE.txt', 'LICENSE', 'NOTICE', 'asm-license.txt', 'META-INF/LICENSE', 'META-INF/NOTICE', 'META-INF/proguard/androidx-annotations.p
+            excludes += ['LICENSE.txt', 'LICENSE', 'NOTICE', 'asm-license.txt', 'META-INF/LICENSE', 'META-INF/NOTICE', 'META-INF/proguard/androidx-annotations.pro']
+        }
+    }
+
     splits {
         abi {
             enable !project.hasProperty('huawei') // huawei builds do not need the split variants
