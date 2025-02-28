@@ -1,4 +1,5 @@
-![Añadir un título (3)](https://github.com/user-attachments/assets/0bb8b4b6-ec23-478d-b3eb-54c9454e12a5)
+
+![Añadir un título (3)](https://github.com/user-attachments/assets/7bc76191-5079-46a5-88ef-15de84d1592b)
 
 ***NOTICE: EVERY PERSON WHO WANTS TO COLLABORATE ON THE PROJECT IS WELCOME, WE NEED SOMEONE WHO IS AN EXPERT IN UI TO FIX A SMALL KEYBOARD BUG***
 *** TO COLLABORATE, WRITE AN ISSUE ***
@@ -7,7 +8,7 @@
 
 # ThreadScoopOnionChat
 
-Esta version es un Fork de " https://github.com/session-foundation/session-android ", enfocado en la privacidad.
+This is a fork privacy focussed extra features from SESSION " https://github.com/session-foundation/session-android ", .
 
 ## How Did ThreadScoopOnionChat Come About?
 
@@ -38,27 +39,20 @@ if (words.size != 25) throw DecodingError.InputTooShort
 
 With these adjustments, the issue of insufficient entropy (now 256 bits) is corrected and recovery with 25 words for the Ed25519 key is implemented.
 
-![image](https://github.com/user-attachments/assets/217b5a7c-a455-4938-88af-961cf660cad9)
+![image](https://github.com/user-attachments/assets/bad44698-2f93-431f-a964-6887f493b69e)
 
 
 ## Regarding reference 2> "https://soatok.blog/2025/01/14/dont-use-session-signal-fork/#in-band-negotiation"
 
 To solve this issue, "ExtraSecurity" is implemented, an activity accessible from the settings.
-![image](https://github.com/user-attachments/assets/5e54af7c-e6a4-4564-94ad-63a178a9d973)
- ![image](https://github.com/user-attachments/assets/f23be3db-1c84-417e-8743-fe171ccf1c99) 
- ![image](https://github.com/user-attachments/assets/3bec5806-1bf2-40e8-ae98-f17a10fcbbec)
-![image](https://github.com/user-attachments/assets/c45b7416-2849-47c4-9641-bbca2eecf3af)
 
-![image](https://github.com/user-attachments/assets/a1b174a1-5cb8-4c24-a35a-2a89d6af2597)
-![image](https://github.com/user-attachments/assets/062e14d3-a614-4d8a-a4a0-16978d590da5)
-
+![image](https://github.com/user-attachments/assets/f78be0a8-9be5-45ef-bd9e-63915bbea8bb)
+![image](https://github.com/user-attachments/assets/4fabcab5-8634-42b0-8518-e29709c96a38)
+![image](https://github.com/user-attachments/assets/60ff9959-6a2d-42d7-a5dc-50c7b4f49e08)
+![image](https://github.com/user-attachments/assets/eacaf672-7f07-459c-8f9d-7c226966ea33)
+![image](https://github.com/user-attachments/assets/9022c506-05da-4bc9-a8fb-107f6febd7a3)
 
 
-
-
-  ![image](https://github.com/user-attachments/assets/07586efc-9087-4f2c-84de-41562d3cfaca)
-
-![image](https://github.com/user-attachments/assets/4336130e-7f01-4e5e-90a0-e09d95ed139c) ![image](https://github.com/user-attachments/assets/c6f76289-404e-4452-8d8b-0758462ea8f6)
 
 
 
@@ -87,6 +81,13 @@ This approach reinforces the overall security of the protocol, preserving the in
 To implement this function, several files were modified:
 <p> <b>·Storage.kt </b></p> <p> <b>·SQLCipherOpenHelper.kt </b></p> <p> <b>·Messagesender.kt </b></p> <p> <b>·Messagereceiver.kt </b></p> <p> <b>·Threadatabase.java </b></p> <p> <b>·ConversationsV2.kt </b></p> <p> <b>·SettingsActivity</b></p> <p> <b>·Extrasecurityactivity.kt </b></p> <p> <b>·Storageprotocol.kt </b></p> <p> <b>·ConversationMenuHelper.kt </b></p> <p> <b>·MessagingModuleConfiguration.kt </b></p> <p> <b>·KeyPairUtilities </b></p> <p> <b>·Contact.kt </b></p> <p> <b>·SignalServiceProto </b></p> <p> <b>·MessageWrapper.kt </b></p> <p> <b>·ReceivedMessageHandler.kt: </b></p>
 
+
+
+![image](https://github.com/user-attachments/assets/fe3942cb-1220-4602-bf4a-45394baa207f)
+![image](https://github.com/user-attachments/assets/8e7fd497-8121-44f4-a6db-05f287f97fdd)
+
+![image](https://github.com/user-attachments/assets/9cf94669-73da-40b4-a1d4-cabd2c054cf0)
+![image](https://github.com/user-attachments/assets/638c29fb-e334-4bd5-9c37-ef5fd3803cdf)
 
 
 ## STEPS TO CONFIGURE AND USE EXTRASECURITY (THREADSOOP ENCRYPTION)
