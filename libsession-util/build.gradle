@@ -12,8 +12,11 @@ android {
         targetSdkVersion androidCompileSdkVersion
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
         externalNativeBuild {
             cmake {
+                cFlags "-ffile-prefix-map=${rootDir}=."
+                cppFlags "-ffile-prefix-map=${rootDir}=."
             }
         }
     }
@@ -23,16 +26,19 @@ android {
             minifyEnabled false
         }
     }
+
     externalNativeBuild {
         cmake {
             path "src/main/cpp/CMakeLists.txt"
             version "3.22.1+"
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = '1.8'
     }
