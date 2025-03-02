@@ -9,6 +9,7 @@
     android:focusable="false"
     android:orientation="vertical"
     android:paddingTop="32dp"
+    android:fitsSystemWindows="true"
     tools:context=".conversation.v2.ConversationActivityV2">
 
     <!-- 1) Tu Toolbar principal -->
