@@ -15,8 +15,8 @@ android {
 
         externalNativeBuild {
             cmake {
-                cFlags "-ffile-prefix-map=${rootDir}=."
-                cppFlags "-ffile-prefix-map=${rootDir}=."
+                cFlags "-ffile-prefix-map=${rootDir}=. -DCMAKE_SHARED_LINKER_FLAGS=-Wl,--build-id=none"
+                cppFlags "-ffile-prefix-map=${rootDir}=. -DCMAKE_SHARED_LINKER_FLAGS=-Wl,--build-id=none"
             }
         }
     }
