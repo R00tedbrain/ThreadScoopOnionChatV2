@@ -252,6 +252,12 @@ android {
         abortOnError true
         baseline file('lint-baseline.xml')
     }
+
+    // >>> ÚNICO BLOQUE AÑADIDO <<<
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
 }
 
 apply {
