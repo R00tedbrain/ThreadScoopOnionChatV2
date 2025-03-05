@@ -132,7 +132,7 @@ object MessageReceiver {
                     if (keyPairs.isEmpty()) {
                         throw Error.NoGroupKeyPair
                     }
-                    var kp = keyPairs.removeLast()
+                    var kp = keyPairs.removeAt(keyPairs.lastIndex)
                     fun tryDecrypt() {
                         try {
                             val decRes = MessageDecrypter.decrypt(ciphertext.toByteArray(), kp)
@@ -140,7 +140,7 @@ object MessageReceiver {
                             sender = decRes.second
                         } catch (e: Exception) {
                             if (keyPairs.isNotEmpty()) {
-                                kp = keyPairs.removeLast()
+                                kp = keyPairs.removeAt(keyPairs.lastIndex)
                                 tryDecrypt()
                             } else throw e
                         }
