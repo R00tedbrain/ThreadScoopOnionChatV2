@@ -56,6 +56,10 @@ android {
         resources {
             excludes += ['LICENSE.txt', 'LICENSE', 'NOTICE', 'asm-license.txt', 'META-INF/LICENSE', 'META-INF/NOTICE', 'META-INF/proguard/androidx-annotations.pro']
         }
+        dex {
+            // Habilita el “legacy packaging” para que se compriman los .dex
+            useLegacyPackaging = true
+        }
     }
 
     splits {
