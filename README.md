@@ -4,11 +4,15 @@
 ***NOTICE: EVERY PERSON WHO WANTS TO COLLABORATE ON THE PROJECT IS WELCOME, WE NEED SOMEONE WHO IS AN EXPERT IN UI TO FIX A SMALL KEYBOARD BUG***
 *** TO COLLABORATE, WRITE AN ISSUE ***
 
-
-
 # ThreadScoopOnionChat
 
 This is a fork privacy focussed extra features from SESSION " https://github.com/session-foundation/session-android ", .
+
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
+     alt="Get it on F-Droid"
+     height="80">](https://f-droid.org/packages/com.bwt.threadscooponionchatcom/)
+
+Or download the latest APK from the [Releases Section](https://github.com/R00tedbrain/ThreadScoopOnionChatV2/releases/latest).
 
 ## How Did ThreadScoopOnionChat Come About?
 
